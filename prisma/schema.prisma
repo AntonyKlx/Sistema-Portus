@@ -4,10 +4,130 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id                   Int      @id @default(autoincrement())
+  nome                 String
+  email                String   @unique
+  senha                String
+  ativo                Boolean  @default(true)
+  tentativasIncorretas Int      @default(0)
+  criadoEm             DateTime @default(now())
+
+  perfilId Int
+  perfil   PerfilAcesso @relation(fields: [perfilId], references: [id])
+
+  morador  Morador?
+  porteiro Porteiro?
+  logs     LogAcesso[]
+}
+
+model PerfilAcesso {
+  id         Int         @id @default(autoincrement())
+  nome       String      @unique
+  permissoes Permissao[]
+  usuarios   Usuario[]
+}
+
+model Permissao {
+  id   Int    @id @default(autoincrement())
+  nome String
+
+  perfilId Int
+  perfil   PerfilAcesso @relation(fields: [perfilId], references: [id])
+}
+
+model Porteiro {
+  id Int @id @default(autoincrement())
+
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+}
+
+model Morador {
+  id           Int     @id @default(autoincrement())
+  telefone     String?
+  inadimplente Boolean @default(false)
+
+  usuarioId Int     @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  unidadeId Int
+  unidade   Unidade @relation(fields: [unidadeId], references: [id])
+
+  reservas Reserva[]
+}
+
+model Unidade {
+  id     Int    @id @default(autoincrement())
+  bloco  String
+  andar  Int
+  numero String
+
+  moradores  Morador[]
+  encomendas Encomenda[]
+}
+
+model Encomenda {
+  id               Int       @id @default(autoincrement())
+  remetente        String
+  codigoPacote     String
+  status           String    @default("Aguardando Retirada")
+  dataHoraChegada  DateTime  @default(now())
+  dataHoraRetirada DateTime?
+  nomeRetirante    String?
+
+  unidadeId Int
+  unidade   Unidade @relation(fields: [unidadeId], references: [id])
+}
+
+model AreaComum {
+  id        Int     @id @default(autoincrement())
+  nome      String  @unique
+  descricao String?
+
+  reservas Reserva[]
+  regras   RegrasReserva?
+}
+
+model RegrasReserva {
+  id                          Int      @id @default(autoincrement())
+  antecedenciaMinimaReserva   Int
+  antecedenciaMinCancelamento Int
+  limiteReservasAtivas        Int
+  horarioPermitidoInicio      DateTime
+  horarioPermitidoFim         DateTime
+
+  areaComumId Int       @unique
+  areaComum   AreaComum @relation(fields: [areaComumId], references: [id])
+}
+
+model Reserva {
+  id            Int      @id @default(autoincrement())
+  dataHora      DateTime
+  status        String   @default("Pendente")
+  justificativa String?
+  criadoEm      DateTime @default(now())
+
+  moradorId Int
+  morador   Morador @relation(fields: [moradorId], references: [id])
+
+  areaComumId Int
+  areaComum   AreaComum @relation(fields: [areaComumId], references: [id])
+}
+
+model LogAcesso {
+  id            Int      @id @default(autoincrement())
+  dataHora      DateTime @default(now())
+  acaoExecutada String
+
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
 }
