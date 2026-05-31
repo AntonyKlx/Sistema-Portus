@@ -1,26 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ── Cores ───────────────────────────────────────────── */
+  --color-primary:         #582688;
+  --color-primary-hover:   #6B2FA0;
+  --color-primary-light:   #F6ECFF;
+  --color-border:          #C7C7C7;
+  --color-bg:              #FFFFFF;
+
+  --color-badge-green-bg:     #DCFCE7;
+  --color-badge-green-text:   #16A34A;
+  --color-badge-orange-bg:    #FEF3C7;
+  --color-badge-orange-text:  #D97706;
+  --color-badge-red-bg:       #FFE4E6;
+  --color-badge-red-text:     #E11D48;
+  --color-badge-blue-bg:      #DBEAFE;
+  --color-badge-blue-text:    #2563EB;
+  --color-badge-purple-bg:    #F3E8FF;
+  --color-badge-purple-text:  #7C3AED;
+
+  /* ── Tipografia ──────────────────────────────────────── */
+  --font-sans: "Poppins", sans-serif;
+
+  /* ── Border radius ───────────────────────────────────── */
+  --radius-card:  13px;
+  --radius-badge: 9999px;
+  --radius-btn:   8px;
+  --radius-input: 8px;
+
+  /* ── Sombras ─────────────────────────────────────────── */
+  --shadow-card:       0px 4px 7.1px 0px rgba(0, 0, 0, 0.11);
+  --shadow-card-hover: 0px 4px 12px 0px rgba(88, 38, 136, 0.15);
+
+  /* ── Espaçamentos ────────────────────────────────────── */
+  --spacing-card-p:      10px;
+  --spacing-card-gap:    10px;
+  --spacing-page-x:      32px;
+  --spacing-page-y:      28px;
+  --spacing-section-gap: 24px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html, body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg);
+    color: #1f2937;
+    -webkit-font-smoothing: antialiased;
   }
+
+  ::-webkit-scrollbar       { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+
+  /* ── Layout ──────────────────────────────────────────── */
+  .page-wrapper {
+    padding: var(--spacing-page-x) var(--spacing-page-y);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-section-gap);
+  }
+
+  /* ── Tipografia ──────────────────────────────────────── */
+  .page-title {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 32px;
+    color: var(--color-primary);
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 26px;
+    color: var(--color-primary);
+  }
+
+  /* ── Header (título + avatar) ────────────────────────── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .avatar-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 6px 12px;
+  }
+
+  .avatar-chip-name { font-size: 14px; font-weight: 600; color: #1f2937; line-height: 1; }
+  .avatar-chip-role { font-size: 12px; color: #9ca3af; line-height: 1; }
+
+  /* ── Stat Card ───────────────────────────────────────── */
+  .stat-card {
+    background: white;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    padding: var(--spacing-card-p);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-card-gap);
+  }
+
+  .stat-card-label { font-size: 13px; font-weight: 500; color: #6b7280; }
+  .stat-card-value { font-size: 28px; font-weight: 700; color: #1f2937; line-height: 1; }
+
+  /* ── Tabela ──────────────────────────────────────────── */
+  .table-wrapper {
+    background: white;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .table-header-row {
+    background-color: var(--color-primary-light);
+    font-size: 13px;
+    font-weight: 500;
+    color: #4b5563;
+  }
+
+  .table-cell { padding: 12px 16px; font-size: 14px; color: #374151; }
+
+  .table-row {
+    border-top: 1px solid var(--color-border);
+    transition: background 0.15s;
+  }
+  .table-row:hover { background: #fafafa; }
+
+  /* ── Badges ──────────────────────────────────────────── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 12px;
+    border-radius: var(--radius-badge);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .badge-green  { background: var(--color-badge-green-bg);  color: var(--color-badge-green-text); }
+  .badge-orange { background: var(--color-badge-orange-bg); color: var(--color-badge-orange-text); }
+  .badge-red    { background: var(--color-badge-red-bg);    color: var(--color-badge-red-text); }
+  .badge-blue   { background: var(--color-badge-blue-bg);   color: var(--color-badge-blue-text); }
+  .badge-purple { background: var(--color-badge-purple-bg); color: var(--color-badge-purple-text); }
+
+  /* ── Botões ──────────────────────────────────────────── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-primary);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 16px;
+    border-radius: var(--radius-btn);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+
+  .btn-outline-green {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--color-badge-green-text);
+    color: var(--color-badge-green-text);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-btn);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-outline-green:hover { background: var(--color-badge-green-bg); }
+
+  .btn-outline-red {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--color-badge-red-text);
+    color: var(--color-badge-red-text);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-btn);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-outline-red:hover { background: var(--color-badge-red-bg); }
+
+  .btn-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--color-border);
+    color: #4b5563;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 16px;
+    border-radius: var(--radius-btn);
+    background: white;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-filter:hover { background: #f9fafb; }
+
+  /* ── Inputs ──────────────────────────────────────────── */
+  .input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: #1f2937;
+    outline: none;
+    transition: border 0.15s, box-shadow 0.15s;
+  }
+  .input::placeholder { color: #9ca3af; }
+  .input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(88, 38, 136, 0.12);
+  }
+
+  .input-icon-wrapper { position: relative; display: flex; align-items: center; }
+  .input-icon         { position: absolute; left: 12px; color: #9ca3af; pointer-events: none; }
+  .input-with-icon    { padding-left: 36px; }
+
+  /* ── Icon action buttons ─────────────────────────────── */
+  .icon-btn {
+    padding: 6px;
+    border-radius: 6px;
+    color: #9ca3af;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+  .icon-btn:hover { color: var(--color-primary); background: var(--color-primary-light); }
 }
