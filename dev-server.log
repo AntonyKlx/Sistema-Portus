@@ -1,0 +1,63 @@
+
+> sistema-portus@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://26.185.201.122:3000
+✓ Ready in 970ms
+Creating turbopack project {
+  dir: 'C:\\Users\\gabriel\\Documents\\Sistema-Portus',
+  testMode: true
+}
+
+ GET / 200 in 2.8s (next.js: 2.5s, application-code: 243ms)
+ GET /dashboard 404 in 369ms (next.js: 340ms, application-code: 29ms)
+ GET /dashboard 404 in 27ms (next.js: 2ms, application-code: 24ms)
+ GET /encomendas 404 in 6ms (next.js: 3ms, application-code: 4ms)
+ GET /encomendas 404 in 28ms (next.js: 3ms, application-code: 25ms)
+ GET /reservas 404 in 7ms (next.js: 3ms, application-code: 4ms)
+ GET /reservas 404 in 28ms (next.js: 3ms, application-code: 25ms)
+ GET /areas-comuns 200 in 472ms (next.js: 450ms, application-code: 23ms)
+ GET /api/areas-comuns 500 in 2.4s (next.js: 356ms, application-code: 2.1s)
+ GET /reservas 404 in 13ms (next.js: 3ms, application-code: 10ms)
+ GET /api/areas-comuns 200 in 2.0s (next.js: 3ms, application-code: 2.0s)
+ GET /reservas 404 in 30ms (next.js: 2ms, application-code: 28ms)
+ GET /apartamentos 200 in 429ms (next.js: 403ms, application-code: 26ms)
+ GET /areas-comuns 200 in 10ms (next.js: 1676µs, application-code: 8ms)
+ GET /apartamentos 200 in 20ms (next.js: 2ms, application-code: 18ms)
+ GET /api/unidades 500 in 2.2s (next.js: 130ms, application-code: 2.1s)
+ GET /api/areas-comuns 500 in 1527ms (next.js: 1484µs, application-code: 1526ms)
+ GET /api/areas-comuns 500 in 1527ms (next.js: 3ms, application-code: 1524ms)
+ GET /api/unidades 500 in 2.1s (next.js: 8ms, application-code: 2.1s)
+ GET /api/unidades 500 in 2.1s (next.js: 11ms, application-code: 2.1s)
+ GET /api/unidades 500 in 2.1s (next.js: 15ms, application-code: 2.1s)
+ GET /apartamentos 200 in 100ms (next.js: 6ms, application-code: 94ms)
+ GET /api/unidades 500 in 2.0s (next.js: 3ms, application-code: 2.0s)
+ GET /apartamentos 200 in 28ms (next.js: 1862µs, application-code: 27ms)
+ GET /api/unidades 500 in 2.1s (next.js: 4ms, application-code: 2.1s)
+ POST /api/unidades 500 in 2.0s (next.js: 1794µs, application-code: 2.0s)
+ GET /areas-comuns 200 in 14ms (next.js: 2ms, application-code: 12ms)
+ GET /api/areas-comuns 500 in 2.1s (next.js: 2ms, application-code: 2.1s)
+ GET /api/areas-comuns 500 in 2.1s (next.js: 6ms, application-code: 2.1s)
+ GET /apartamentos 200 in 10ms (next.js: 1674µs, application-code: 9ms)
+ GET /areas-comuns 200 in 14ms (next.js: 5ms, application-code: 9ms)
+ GET /administradores 404 in 19ms (next.js: 9ms, application-code: 10ms)
+ GET /api/areas-comuns 200 in 609ms (next.js: 1831µs, application-code: 607ms)
+ GET /api/unidades 200 in 1992ms (next.js: 1361µs, application-code: 1990ms)
+ GET /api/areas-comuns 200 in 610ms (next.js: 4ms, application-code: 606ms)
+ GET /administradores 404 in 36ms (next.js: 7ms, application-code: 29ms)
+ GET /areas-comuns 200 in 15ms (next.js: 5ms, application-code: 10ms)
+ GET /apartamentos 200 in 15ms (next.js: 4ms, application-code: 10ms)
+ GET /api/areas-comuns 500 in 2.0s (next.js: 1448µs, application-code: 2.0s)
+ GET /api/areas-comuns 500 in 2.1s (next.js: 5ms, application-code: 2.0s)
+ GET /api/unidades 500 in 1627ms (next.js: 1558µs, application-code: 1626ms)
+ GET /api/unidades 500 in 2.0s (next.js: 2ms, application-code: 2.0s)
+ GET /administradores 404 in 13ms (next.js: 2ms, application-code: 10ms)
+ GET /administradores 404 in 27ms (next.js: 6ms, application-code: 22ms)
+ GET /areas-comuns 200 in 11ms (next.js: 1816µs, application-code: 9ms)
+ GET /apartamentos 200 in 16ms (next.js: 2ms, application-code: 13ms)
+ GET /api/areas-comuns 500 in 2.0s (next.js: 1905µs, application-code: 2.0s)
+ GET /api/areas-comuns 500 in 2.0s (next.js: 4ms, application-code: 2.0s)
+ GET /api/unidades 500 in 1333ms (next.js: 2ms, application-code: 1331ms)
+ GET /api/unidades 500 in 1333ms (next.js: 5ms, application-code: 1327ms)
