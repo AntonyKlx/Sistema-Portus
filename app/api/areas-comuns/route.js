@@ -17,7 +17,6 @@ export async function POST(request) {
 
     if (!nome) return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
 
-    //aqui vai ser unique por causa da marcação no schema
     const areaExistente = await prisma.areaComum.findUnique({
       where: { nome }
     });

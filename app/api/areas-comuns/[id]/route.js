@@ -43,3 +43,43 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: 'Erro ao deletar a área comum' }, { status: 500 })
   }
 }
+
+export async function PUT(request, { params }) {
+  try {
+    const id = Number(params.id)
+    //validar id pra não dar cagada
+    if (!Number.isInteger(id) || id <= 0) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+    }
+
+    const existeAreaComum = await prisma.areaComum.findUnique({
+      where: { id: id }
+    })
+    if (!existeAreaComum) return NextResponse.json({ error: 'Área comum não existe' }, { status: 404 })
+
+    const data = await request.json()
+    const { nome, descricao } = data;
+
+    if (!nome) return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
+
+    const areaExistente = await prisma.areaComum.findFirst({
+      where: {
+        id: { not: id },
+        nome
+      }
+    });
+
+    if (areaExistente) return NextResponse.json({ error: 'Já existe uma área comum com esse nome' }, { status: 409 })
+
+    const areaAtualizada = await prisma.areaComum.update({
+      where: { id: id },
+      data: {
+        nome,
+        descricao
+      }
+    })
+    return NextResponse.json(areaAtualizada, { status: 200 })
+  } catch (error) {
+    return NextResponse.json({ error: 'Erro ao atualizar área comum' }, { status: 500 });
+  }
+}
