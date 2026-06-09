@@ -1,5 +1,5 @@
 import "./globals.css";
-import Sidebar from "../components/Sidebar";
+import AppShell from "@/components/AppShell";
 
 export const metadata = {
   title: "Portus - Condominium Management",
@@ -10,12 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <body>
-        <div className="flex min-h-screen bg-white">
-          <Sidebar />
-          <div className="flex-1 flex flex-col">
-            {children}
-          </div>
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
