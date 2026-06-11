@@ -24,16 +24,6 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unidade não existe' }, { status: 404 })
     }
 
-    // const encomendasPendentes = await prisma.encomenda.findMany({
-    //   where: {
-    //     unidadeId: unidadeIdNumber,
-    //     status: 'Aguardando Retirada'
-    //   },
-    //   orderBy: {
-    //     dataHoraChegada: 'desc'
-    //   }
-    // })
-
     //busco encomendas da unidade x
     const where = {
       unidadeId: unidadeIdNumber
