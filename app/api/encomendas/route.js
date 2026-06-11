@@ -6,6 +6,8 @@ export async function GET(request) {
     const searchParams = request.nextUrl.searchParams
     const unidadeId = searchParams.get('unidadeId')
     const unidadeIdNumber = Number(unidadeId)
+    const statusParams = searchParams.get('status')
+
 
     if (!unidadeId) {
       return NextResponse.json({ error: 'É preciso informar o id da unidade' }, { status: 400 })
@@ -22,17 +24,32 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unidade não existe' }, { status: 404 })
     }
 
-    const encomendasPendentes = await prisma.encomenda.findMany({
-      where: {
-        unidadeId: unidadeIdNumber,
-        status: 'Aguardando Retirada'
-      },
+    // const encomendasPendentes = await prisma.encomenda.findMany({
+    //   where: {
+    //     unidadeId: unidadeIdNumber,
+    //     status: 'Aguardando Retirada'
+    //   },
+    //   orderBy: {
+    //     dataHoraChegada: 'desc'
+    //   }
+    // })
+
+    //busco encomendas da unidade x
+    const where = {
+      unidadeId: unidadeIdNumber
+    }
+
+    if (statusParams !== null)
+      where.status = statusParams
+
+    const encomendas = await prisma.encomenda.findMany({
+      where,
       orderBy: {
         dataHoraChegada: 'desc'
       }
     })
-    return NextResponse.json(encomendasPendentes)
+    return NextResponse.json(encomendas)
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao buscar encomendas pendentes' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao buscar encomendas' }, { status: 500 })
   }
 }
