@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -77,9 +78,7 @@ export default function Sidebar() {
       {/* 4. Removemos as bordas de cima para o visual mais limpo visto no Figma */}
       <div className="pb-8">
         <button
-          onClick={() => {
-            /* handle logout */
-          }}
+          onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex items-center gap-4 py-3.5 pl-8 text-[15px] font-medium text-gray-500 border-l-4 border-transparent hover:text-red-600 hover:bg-red-50 transition-all duration-150 w-full group"
         >
           <LogOut size={22} className="text-gray-400 group-hover:text-red-600 transition-colors" />

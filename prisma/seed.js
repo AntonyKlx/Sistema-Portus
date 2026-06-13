@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
 async function resetSeedData(prisma) {
@@ -62,6 +63,7 @@ async function main() {
     await resetSeedData(prisma);
 
     const perfis = await createPerfis(prisma);
+    const senhaPadrao = await bcrypt.hash("123456", 10);
 
     const unidade101 = await prisma.unidade.create({
       data: { bloco: "A", andar: 1, numero: "101" },
@@ -79,7 +81,7 @@ async function main() {
       data: {
         nome: "Joao Silva",
         email: "joao.silva@email.com",
-        senha: "123456",
+        senha: senhaPadrao,
         ativo: true,
         tentativasIncorretas: 0,
         perfilId: perfis.morador.id,
@@ -97,7 +99,7 @@ async function main() {
       data: {
         nome: "Maria Souza",
         email: "maria.souza@email.com",
-        senha: "123456",
+        senha: senhaPadrao,
         ativo: true,
         tentativasIncorretas: 0,
         perfilId: perfis.morador.id,
@@ -115,7 +117,7 @@ async function main() {
       data: {
         nome: "Carlos Porteiro",
         email: "carlos.porteiro@email.com",
-        senha: "123456",
+        senha: senhaPadrao,
         ativo: true,
         tentativasIncorretas: 0,
         perfilId: perfis.porteiro.id,
@@ -127,7 +129,7 @@ async function main() {
       data: {
         nome: "Ana Sindica",
         email: "ana.sindica@email.com",
-        senha: "123456",
+        senha: senhaPadrao,
         ativo: true,
         tentativasIncorretas: 0,
         perfilId: perfis.sindico.id,
