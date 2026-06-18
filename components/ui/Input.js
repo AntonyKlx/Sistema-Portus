@@ -7,6 +7,7 @@ export default function Input({
   icon: Icon,
   name,
   required,
+  disabled,
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -28,7 +29,8 @@ export default function Input({
           value={value}
           onChange={onChange}
           required={required}
-          className={`input ${Icon ? "input-with-icon" : ""}`}
+          disabled={disabled}
+          className={`input ${Icon ? "input-with-icon" : ""} ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
         />
       </div>
     </div>
