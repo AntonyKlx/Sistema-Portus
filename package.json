@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test:integration": "node --test tests/integration/*.test.mjs",
     "hash-passwords": "node prisma/hash-existing-passwords.js",
     "start": "next start",
     "lint": "eslint"

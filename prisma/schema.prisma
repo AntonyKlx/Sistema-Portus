@@ -123,6 +123,17 @@ model Reserva {
   areaComum   AreaComum @relation(fields: [areaComumId], references: [id])
 }
 
+model BackupReserva {
+  id              Int       @id @default(autoincrement())
+  status          String    @default("Concluido")
+  totalReservas   Int       @default(0)
+  solicitadoPor   String?
+  solicitadoEm    DateTime  @default(now())
+  concluidoEm     DateTime?
+  conteudo        Json
+  mensagemErro    String?
+}
+
 model LogAcesso {
   id            Int      @id @default(autoincrement())
   dataHora      DateTime @default(now())

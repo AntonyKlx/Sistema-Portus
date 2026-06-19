@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DatabaseBackup, RefreshCw } from "lucide-react";
 import {
   Badge,
+  Button,
   PageHeader,
   PageWrapper,
   Select,
@@ -24,6 +26,8 @@ function varianteStatus(status) {
   if (status === "Pendente") return "orange";
   if (status === "Aprovada") return "green";
   if (status === "Reprovada") return "red";
+  if (status === "Concluido") return "green";
+  if (status === "Falhou") return "red";
   return "blue";
 }
 
@@ -46,10 +50,13 @@ export default function ReservasPage() {
 
   const [reservasMorador, setReservasMorador] = useState([]);
   const [reservasAdmin, setReservasAdmin] = useState([]);
+  const [backups, setBackups] = useState([]);
 
   const [carregandoAreas, setCarregandoAreas] = useState(true);
   const [carregandoMorador, setCarregandoMorador] = useState(false);
   const [carregandoAdmin, setCarregandoAdmin] = useState(true);
+  const [carregandoBackups, setCarregandoBackups] = useState(true);
+  const [gerandoBackup, setGerandoBackup] = useState(false);
 
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -58,6 +65,7 @@ export default function ReservasPage() {
   useEffect(() => {
     buscarAreas();
     buscarReservasAdmin();
+    buscarBackups();
   }, []);
 
   // Sempre que a área selecionada mudar, busca as reservas aprovadas (Calendário)
@@ -67,7 +75,7 @@ export default function ReservasPage() {
     }
   }, [areaSelecionadaId]);
 
-  const buscarAreas = async () => {
+  async function buscarAreas() {
     try {
       const res = await fetch("/api/areas-comuns");
       const data = await res.json();
@@ -79,9 +87,9 @@ export default function ReservasPage() {
     } finally {
       setCarregandoAreas(false);
     }
-  };
+  }
 
-  const buscarReservasAdmin = async () => {
+  async function buscarReservasAdmin() {
     setCarregandoAdmin(true);
     try {
       const res = await fetch("/api/reservas?status=Pendente");
@@ -93,9 +101,9 @@ export default function ReservasPage() {
     } finally {
       setCarregandoAdmin(false);
     }
-  };
+  }
 
-  const buscarReservasMorador = async (idArea) => {
+  async function buscarReservasMorador(idArea) {
     setCarregandoMorador(true);
     try {
       const res = await fetch(`/api/reservas?areaComumId=${idArea}&status=Aprovada`);
@@ -106,6 +114,42 @@ export default function ReservasPage() {
       setErro(err.message);
     } finally {
       setCarregandoMorador(false);
+    }
+  }
+
+  async function buscarBackups() {
+    setCarregandoBackups(true);
+    try {
+      const res = await fetch("/api/reservas/backups");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao buscar backups");
+      setBackups(data);
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setCarregandoBackups(false);
+    }
+  }
+
+  const solicitarBackup = async () => {
+    setErro("");
+    setSucesso("");
+    setGerandoBackup(true);
+    try {
+      const res = await fetch("/api/reservas/backups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ solicitadoPor: usuarioMock.name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao gerar backup");
+
+      setSucesso(`Backup de reservas #${data.id} concluído com ${data.totalReservas} registro(s).`);
+      await buscarBackups();
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setGerandoBackup(false);
     }
   };
 
@@ -217,6 +261,47 @@ export default function ReservasPage() {
                 <td className="table-cell font-medium">{formatarData(reserva.dataHora)}</td>
                 <td className="table-cell"><Badge label={reserva.status} variant={varianteStatus(reserva.status)} /></td>
                 <td className="table-cell text-gray-500 text-sm">Ocupado por {reserva.morador?.usuario?.nome}</td>
+              </tr>
+            ))
+          )}
+        </Table>
+      </section>
+
+      {/* SESSÃO 3: BACKUP ADMIN MASTER */}
+      <section className="flex flex-col gap-4 mt-8">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="section-title">Backup de Reservas (Admin Master)</h2>
+            <p className="mt-1 text-sm text-gray-500">Solicite e monitore snapshots do módulo de reservas.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="filter" onClick={buscarBackups} disabled={carregandoBackups || gerandoBackup}>
+              <RefreshCw size={16} aria-hidden="true" />
+              Atualizar
+            </Button>
+            <Button onClick={solicitarBackup} disabled={gerandoBackup}>
+              <DatabaseBackup size={16} aria-hidden="true" />
+              {gerandoBackup ? "Gerando..." : "Solicitar backup"}
+            </Button>
+          </div>
+        </div>
+
+        <Table columns={["ID", "Status", "Reservas", "Solicitado por", "Solicitado em", "Concluído em"]}>
+          {carregandoBackups ? (
+            <tr className="table-row"><td className="table-cell" colSpan={6}>Carregando backups...</td></tr>
+          ) : backups.length === 0 ? (
+            <tr className="table-row"><td className="table-cell" colSpan={6}>Nenhum backup solicitado.</td></tr>
+          ) : (
+            backups.map((backup) => (
+              <tr key={backup.id} className="table-row">
+                <td className="table-cell font-medium">#{backup.id}</td>
+                <td className="table-cell">
+                  <Badge label={backup.status} variant={varianteStatus(backup.status)} />
+                </td>
+                <td className="table-cell">{backup.totalReservas}</td>
+                <td className="table-cell">{backup.solicitadoPor || "-"}</td>
+                <td className="table-cell">{formatarData(backup.solicitadoEm)}</td>
+                <td className="table-cell">{formatarData(backup.concluidoEm)}</td>
               </tr>
             ))
           )}
