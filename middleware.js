@@ -10,6 +10,7 @@ const ROTAS_RESTRITAS = [
   { prefixo: "/apartamentos", perfis: ["sindico", "administrador", "adminMaster"] },
   { prefixo: "/areas-comuns", perfis: ["administrador", "adminMaster"] },
   { prefixo: "/administradores", perfis: ["administrador", "adminMaster"] },
+  { prefixo: "/admins", perfis: ["adminMaster"] },
   { prefixo: "/logs", perfis: ["adminMaster"] },
 ];
 
@@ -47,6 +48,7 @@ export const config = {
     "/apartamentos/:path*",
     "/areas-comuns/:path*",
     "/administradores/:path*",
+    "/admins/:path*",
     "/logs/:path*",
   ],
 };

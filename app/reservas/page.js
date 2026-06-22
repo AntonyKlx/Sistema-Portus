@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DatabaseBackup, RefreshCw } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Trash2 } from "lucide-react";
 import {
   Badge,
-  Button,
+  IconButton,
   PageHeader,
   PageWrapper,
   Select,
@@ -26,8 +27,6 @@ function varianteStatus(status) {
   if (status === "Pendente") return "orange";
   if (status === "Aprovada") return "green";
   if (status === "Reprovada") return "red";
-  if (status === "Concluido") return "green";
-  if (status === "Falhou") return "red";
   return "blue";
 }
 
@@ -45,18 +44,20 @@ function Mensagem({ tipo, children }) {
 }
 
 export default function ReservasPage() {
+  const { data: session } = useSession();
+  const ehMorador = session?.user?.perfil === "morador";
+
   const [areas, setAreas] = useState([]);
   const [areaSelecionadaId, setAreaSelecionadaId] = useState("");
 
   const [reservasMorador, setReservasMorador] = useState([]);
   const [reservasAdmin, setReservasAdmin] = useState([]);
-  const [backups, setBackups] = useState([]);
+  const [minhasReservas, setMinhasReservas] = useState([]);
 
   const [carregandoAreas, setCarregandoAreas] = useState(true);
   const [carregandoMorador, setCarregandoMorador] = useState(false);
   const [carregandoAdmin, setCarregandoAdmin] = useState(true);
-  const [carregandoBackups, setCarregandoBackups] = useState(true);
-  const [gerandoBackup, setGerandoBackup] = useState(false);
+  const [carregandoMinhas, setCarregandoMinhas] = useState(false);
 
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -65,8 +66,12 @@ export default function ReservasPage() {
   useEffect(() => {
     buscarAreas();
     buscarReservasAdmin();
-    buscarBackups();
   }, []);
+
+  // RF11 — Carrega as reservas do próprio morador logado
+  useEffect(() => {
+    if (ehMorador) buscarMinhasReservas();
+  }, [ehMorador]);
 
   // Sempre que a área selecionada mudar, busca as reservas aprovadas (Calendário)
   useEffect(() => {
@@ -75,7 +80,7 @@ export default function ReservasPage() {
     }
   }, [areaSelecionadaId]);
 
-  async function buscarAreas() {
+  const buscarAreas = async () => {
     try {
       const res = await fetch("/api/areas-comuns");
       const data = await res.json();
@@ -87,9 +92,9 @@ export default function ReservasPage() {
     } finally {
       setCarregandoAreas(false);
     }
-  }
+  };
 
-  async function buscarReservasAdmin() {
+  const buscarReservasAdmin = async () => {
     setCarregandoAdmin(true);
     try {
       const res = await fetch("/api/reservas?status=Pendente");
@@ -101,9 +106,9 @@ export default function ReservasPage() {
     } finally {
       setCarregandoAdmin(false);
     }
-  }
+  };
 
-  async function buscarReservasMorador(idArea) {
+  const buscarReservasMorador = async (idArea) => {
     setCarregandoMorador(true);
     try {
       const res = await fetch(`/api/reservas?areaComumId=${idArea}&status=Aprovada`);
@@ -115,41 +120,40 @@ export default function ReservasPage() {
     } finally {
       setCarregandoMorador(false);
     }
-  }
+  };
 
-  async function buscarBackups() {
-    setCarregandoBackups(true);
+  // RF11 — busca apenas as reservas do morador autenticado
+  const buscarMinhasReservas = async () => {
+    setCarregandoMinhas(true);
     try {
-      const res = await fetch("/api/reservas/backups");
+      const res = await fetch("/api/reservas?minhas=true");
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao buscar backups");
-      setBackups(data);
+      if (!res.ok) throw new Error(data.error || "Erro ao buscar suas reservas");
+      setMinhasReservas(data);
     } catch (err) {
       setErro(err.message);
     } finally {
-      setCarregandoBackups(false);
+      setCarregandoMinhas(false);
     }
-  }
+  };
 
-  const solicitarBackup = async () => {
+  // RF11 — cancela uma reserva própria, respeitando a antecedência mínima
+  const cancelarReserva = async (id) => {
+    const confirmou = window.confirm("Deseja realmente cancelar esta reserva?");
+    if (!confirmou) return;
+
     setErro("");
     setSucesso("");
-    setGerandoBackup(true);
     try {
-      const res = await fetch("/api/reservas/backups", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ solicitadoPor: usuarioMock.name }),
-      });
+      const res = await fetch(`/api/reservas/${id}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro ao gerar backup");
+      if (!res.ok) throw new Error(data.error || "Erro ao cancelar reserva");
 
-      setSucesso(`Backup de reservas #${data.id} concluído com ${data.totalReservas} registro(s).`);
-      await buscarBackups();
+      setSucesso("Reserva cancelada com sucesso.");
+      buscarMinhasReservas();
+      if (areaSelecionadaId) buscarReservasMorador(areaSelecionadaId);
     } catch (err) {
       setErro(err.message);
-    } finally {
-      setGerandoBackup(false);
     }
   };
 
@@ -232,6 +236,48 @@ export default function ReservasPage() {
         </Table>
       </section>
 
+      {/* SESSÃO 1.5: MINHAS RESERVAS (Morador) — RF11 */}
+      {ehMorador && (
+        <section className="flex flex-col gap-4">
+          <div>
+            <h2 className="section-title">Minhas reservas</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Cancele uma reserva pendente ou aprovada respeitando a antecedência mínima da área.
+            </p>
+          </div>
+
+          <Table columns={["Área Comum", "Data/Hora", "Status", "Ações"]}>
+            {carregandoMinhas ? (
+              <tr className="table-row"><td className="table-cell" colSpan={4}>Carregando...</td></tr>
+            ) : minhasReservas.length === 0 ? (
+              <tr className="table-row"><td className="table-cell" colSpan={4}>Você ainda não fez nenhuma reserva.</td></tr>
+            ) : (
+              minhasReservas.map((reserva) => {
+                const cancelavel = ["Pendente", "Aprovada"].includes(reserva.status);
+                return (
+                  <tr key={reserva.id} className="table-row">
+                    <td className="table-cell font-medium">{reserva.areaComum?.nome}</td>
+                    <td className="table-cell">{formatarData(reserva.dataHora)}</td>
+                    <td className="table-cell">
+                      <Badge label={reserva.status} variant={varianteStatus(reserva.status)} />
+                    </td>
+                    <td className="table-cell">
+                      {cancelavel && (
+                        <IconButton
+                          icon={Trash2}
+                          title="Cancelar reserva"
+                          onClick={() => cancelarReserva(reserva.id)}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </Table>
+        </section>
+      )}
+
       {/* SESSÃO 2: TELA DO MORADOR (Calendário/Lista) */}
       <section className="flex flex-col gap-4 mt-8">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -261,47 +307,6 @@ export default function ReservasPage() {
                 <td className="table-cell font-medium">{formatarData(reserva.dataHora)}</td>
                 <td className="table-cell"><Badge label={reserva.status} variant={varianteStatus(reserva.status)} /></td>
                 <td className="table-cell text-gray-500 text-sm">Ocupado por {reserva.morador?.usuario?.nome}</td>
-              </tr>
-            ))
-          )}
-        </Table>
-      </section>
-
-      {/* SESSÃO 3: BACKUP ADMIN MASTER */}
-      <section className="flex flex-col gap-4 mt-8">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="section-title">Backup de Reservas (Admin Master)</h2>
-            <p className="mt-1 text-sm text-gray-500">Solicite e monitore snapshots do módulo de reservas.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="filter" onClick={buscarBackups} disabled={carregandoBackups || gerandoBackup}>
-              <RefreshCw size={16} aria-hidden="true" />
-              Atualizar
-            </Button>
-            <Button onClick={solicitarBackup} disabled={gerandoBackup}>
-              <DatabaseBackup size={16} aria-hidden="true" />
-              {gerandoBackup ? "Gerando..." : "Solicitar backup"}
-            </Button>
-          </div>
-        </div>
-
-        <Table columns={["ID", "Status", "Reservas", "Solicitado por", "Solicitado em", "Concluído em"]}>
-          {carregandoBackups ? (
-            <tr className="table-row"><td className="table-cell" colSpan={6}>Carregando backups...</td></tr>
-          ) : backups.length === 0 ? (
-            <tr className="table-row"><td className="table-cell" colSpan={6}>Nenhum backup solicitado.</td></tr>
-          ) : (
-            backups.map((backup) => (
-              <tr key={backup.id} className="table-row">
-                <td className="table-cell font-medium">#{backup.id}</td>
-                <td className="table-cell">
-                  <Badge label={backup.status} variant={varianteStatus(backup.status)} />
-                </td>
-                <td className="table-cell">{backup.totalReservas}</td>
-                <td className="table-cell">{backup.solicitadoPor || "-"}</td>
-                <td className="table-cell">{formatarData(backup.solicitadoEm)}</td>
-                <td className="table-cell">{formatarData(backup.concluidoEm)}</td>
               </tr>
             ))
           )}

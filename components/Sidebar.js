@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -12,6 +12,7 @@ import {
   Building2,
   Layers,
   ShieldCheck,
+  UserCog,
   ScrollText,
   LogOut,
 } from "lucide-react";
@@ -23,12 +24,19 @@ const navItems = [
   { label: "Moradores", href: "/moradores", icon: Users },
   { label: "Apartamentos", href: "/apartamentos", icon: Building2 },
   { label: "Áreas Comuns", href: "/areas-comuns", icon: Layers },
-  { label: "Administradores", href: "/administradores", icon: ShieldCheck },
+  { label: "Perfis de Acesso", href: "/administradores", icon: ShieldCheck },
+  { label: "Administradores", href: "/admins", icon: UserCog, perfis: ["adminMaster"] },
   { label: "Logs", href: "/logs", icon: ScrollText },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const perfil = session?.user?.perfil;
+
+  const itensVisiveis = navItems.filter(
+    (item) => !item.perfis || item.perfis.includes(perfil)
+  );
 
   return (
     // 1. Aumentamos a largura para 260px (w-[260px]) e removemos o padding horizontal (px-4)
@@ -50,7 +58,7 @@ export default function Sidebar() {
       {/* Navigation */}
       {/* O flex-1 empurra o botão de logout lá para o final */}
       <nav className="flex flex-col flex-1">
-        {navItems.map(({ label, href, icon: Icon }) => {
+        {itensVisiveis.map(({ label, href, icon: Icon }) => {
           const isActive = pathname === href;
 
           return (

@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
 
-export default function Select({ label, options = [], value, onChange, name }) {
+export default function Select({ label, options = [], value, onChange, name, disabled }) {
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
@@ -11,7 +11,8 @@ export default function Select({ label, options = [], value, onChange, name }) {
           name={name}
           value={value}
           onChange={onChange}
-          className="input appearance-none pr-8 cursor-pointer"
+          disabled={disabled}
+          className={`input appearance-none pr-8 cursor-pointer ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>
