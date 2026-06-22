@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { autorizar } from '@/lib/authorize'
 
 export async function GET(request) {
+  const { response } = await autorizar('reservas')
+  if (response) return response
+
   try {
     const searchParams = request.nextUrl.searchParams
 

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { autorizar } from '@/lib/authorize'
 
 export async function GET() {
+  const { response } = await autorizar('areas-comuns')
+  if (response) return response
+
   try {
     const areas = await prisma.areaComum.findMany();
     return NextResponse.json(areas);
@@ -11,6 +15,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const { response } = await autorizar('areas-comuns')
+  if (response) return response
+
   try {
     const data = await request.json();
     const { nome, descricao } = data;

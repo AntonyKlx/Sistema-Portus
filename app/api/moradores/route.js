@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { autorizar } from '@/lib/authorize'
 
 export async function GET() {
+  const { response } = await autorizar('moradores')
+  if (response) return response
+
   try {
     const moradores = await prisma.morador.findMany({
       include: {
@@ -21,6 +25,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const { response } = await autorizar('moradores')
+  if (response) return response
+
   try {
     const data = await request.json()
     const { nome, email, senha, telefone, unidadeId, inadimplente } = data

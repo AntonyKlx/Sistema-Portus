@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { autorizar } from '@/lib/authorize'
 
 export async function GET() {
+  const { response } = await autorizar('unidades')
+  if (response) return response
+
   try {
     const unidades = await prisma.unidade.findMany();
     return NextResponse.json(unidades);
@@ -11,6 +15,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const { response } = await autorizar('unidades')
+  if (response) return response
+
   try {
     //recebe os dados 
     const data = await request.json();

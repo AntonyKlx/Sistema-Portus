@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { autorizar } from '@/lib/authorize'
 
 export async function GET(request, { params: paramsPromise }) {
+  const { response } = await autorizar('moradores')
+  if (response) return response
+
   try {
     const params = await paramsPromise
     const id = Number(params.id)
@@ -28,6 +32,9 @@ export async function GET(request, { params: paramsPromise }) {
 }
 
 export async function PUT(request, { params: paramsPromise }) {
+  const { response } = await autorizar('moradores')
+  if (response) return response
+
   try {
     const params = await paramsPromise
     const id = Number(params.id)
@@ -89,6 +96,9 @@ export async function PUT(request, { params: paramsPromise }) {
 }
 
 export async function DELETE(request, { params: paramsPromise }) {
+  const { response } = await autorizar('moradores')
+  if (response) return response
+
   try {
     const params = await paramsPromise
     const id = Number(params.id)

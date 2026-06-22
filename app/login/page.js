@@ -18,7 +18,11 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
+  const [erro, setErro] = useState(
+    searchParams.get("motivo") === "inatividade"
+      ? "Sua sessão foi encerrada por inatividade. Faça login novamente."
+      : ""
+  );
   const [carregando, setCarregando] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
 

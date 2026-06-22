@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { autorizar } from '@/lib/authorize'
 import nodemailer from 'nodemailer'
 
 const transporter = nodemailer.createTransport({
@@ -30,6 +31,9 @@ async function enviarNotificacao(emailDestino, status, nome) {
 }
 
 export async function PUT(request, { params }) {
+  const { response } = await autorizar('reservas')
+  if (response) return response
+
   try {
     const id = Number(params.id)
 

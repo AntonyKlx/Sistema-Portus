@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { autorizar } from '@/lib/authorize'
 
 export async function DELETE(request, { params }) {
+  const { response } = await autorizar('unidades')
+  if (response) return response
+
   try {
     const id = Number(params.id)
     //validar id pra não dar cagada
@@ -35,6 +39,9 @@ export async function DELETE(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  const { response } = await autorizar('unidades')
+  if (response) return response
+
   try {
     const id = Number(params.id)
     //validar id pra não dar cagada
