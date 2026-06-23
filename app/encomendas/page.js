@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   Badge,
   PageHeader,
@@ -83,6 +84,9 @@ function TabelaEncomendas({ encomendas, carregando, vazio }) {
 }
 
 export default function EncomendasPage() {
+  const { data: session, status } = useSession();
+  const ehMorador = session?.user?.perfil === "morador";
+
   const [unidades, setUnidades] = useState([]);
   const [unidadeMoradorId, setUnidadeMoradorId] = useState("");
   const [unidadeConsultaId, setUnidadeConsultaId] = useState("");
@@ -97,6 +101,8 @@ export default function EncomendasPage() {
   const [erro, setErro] = useState("");
 
   useEffect(() => {
+    if (status !== "authenticated" || ehMorador) return;
+
     let ativo = true;
 
     fetch("/api/unidades")
@@ -129,18 +135,22 @@ export default function EncomendasPage() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [status, ehMorador]);
 
   useEffect(() => {
-    if (!unidadeMoradorId) return;
+    if (status !== "authenticated") return;
+    if (!ehMorador && !unidadeMoradorId) return;
 
     let ativo = true;
 
-    const paramsPendentes = new URLSearchParams({
-      unidadeId: unidadeMoradorId,
-      status: statusPendente,
-    });
-    const paramsHistorico = new URLSearchParams({ unidadeId: unidadeMoradorId });
+    const paramsPendentes = new URLSearchParams(
+      ehMorador
+        ? { minhas: "true", status: statusPendente }
+        : { unidadeId: unidadeMoradorId, status: statusPendente }
+    );
+    const paramsHistorico = new URLSearchParams(
+      ehMorador ? { minhas: "true" } : { unidadeId: unidadeMoradorId }
+    );
 
     Promise.all([
       fetch(`/api/encomendas?${paramsPendentes.toString()}`),
@@ -173,7 +183,7 @@ export default function EncomendasPage() {
     return () => {
       ativo = false;
     };
-  }, [unidadeMoradorId]);
+  }, [status, ehMorador, unidadeMoradorId]);
 
   useEffect(() => {
     if (!unidadeConsultaId) return;
@@ -239,12 +249,18 @@ export default function EncomendasPage() {
 
   return (
     <PageWrapper>
-      <PageHeader title="Encomendas" user={usuarioMock} />
+      <PageHeader
+        title="Encomendas"
+        user={{
+          name: session?.user?.name ?? usuarioMock.name,
+          role: session?.user?.perfil ?? usuarioMock.role,
+        }}
+      />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard label="Pendentes" value={pendentes.length} />
-        <StatCard label="Histórico do morador" value={historico.length} />
-        <StatCard label="Consulta atual" value={consulta.length} />
+        <StatCard label="Histórico" value={historico.length} />
+        {!ehMorador && <StatCard label="Consulta atual" value={consulta.length} />}
       </section>
 
       <Mensagem tipo="erro">{erro}</Mensagem>
@@ -252,28 +268,36 @@ export default function EncomendasPage() {
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="section-title">Tela do morador</h2>
-            <p className="mt-1 text-sm text-gray-500">Encomendas da unidade selecionada.</p>
+            <h2 className="section-title">
+              {ehMorador ? "Minhas encomendas" : "Encomendas da unidade"}
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              {ehMorador
+                ? "Lista de encomendas da sua unidade."
+                : "Encomendas da unidade selecionada."}
+            </p>
           </div>
-          <div className="w-full md:w-[360px]">
-            <Select
-              label="Unidade"
-              name="unidadeMoradorId"
-              value={unidadeMoradorId}
-              onChange={(event) => {
-                setErro("");
-                setCarregandoMorador(true);
-                setUnidadeMoradorId(event.target.value);
-              }}
-              options={opcoesUnidades}
-            />
-          </div>
+          {!ehMorador && (
+            <div className="w-full md:w-[360px]">
+              <Select
+                label="Unidade"
+                name="unidadeMoradorId"
+                value={unidadeMoradorId}
+                onChange={(event) => {
+                  setErro("");
+                  setCarregandoMorador(true);
+                  setUnidadeMoradorId(event.target.value);
+                }}
+                options={opcoesUnidades}
+              />
+            </div>
+          )}
         </div>
 
         <TabelaEncomendas
           encomendas={pendentes}
           carregando={carregandoMorador}
-          vazio="Nenhuma encomenda pendente para esta unidade."
+          vazio={ehMorador ? "Você não tem encomendas pendentes." : "Nenhuma encomenda pendente para esta unidade."}
         />
       </section>
 
@@ -292,42 +316,44 @@ export default function EncomendasPage() {
         <TabelaEncomendas
           encomendas={historicoFiltrado}
           carregando={carregandoMorador}
-          vazio="Nenhuma encomenda encontrada no histórico."
+          vazio={ehMorador ? "Você não tem encomendas no histórico." : "Nenhuma encomenda encontrada no histórico."}
         />
       </section>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="section-title">Consulta por unidade</h2>
-            <p className="mt-1 text-sm text-gray-500">Filtro para porteiro e síndico.</p>
+      {!ehMorador && (
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="section-title">Consulta por unidade</h2>
+              <p className="mt-1 text-sm text-gray-500">Filtro para porteiro e síndico.</p>
+            </div>
+            <div className="grid w-full grid-cols-1 gap-3 md:w-[680px] md:grid-cols-[1fr_320px]">
+              <Select
+                label="Unidade"
+                name="unidadeConsultaId"
+                value={unidadeConsultaId}
+                onChange={(event) => {
+                  setErro("");
+                  setCarregandoConsulta(true);
+                  setUnidadeConsultaId(event.target.value);
+                }}
+                options={opcoesUnidades}
+              />
+              <SearchInput
+                placeholder="Buscar remetente, código ou status"
+                value={buscaConsulta}
+                onChange={(event) => setBuscaConsulta(event.target.value)}
+              />
+            </div>
           </div>
-          <div className="grid w-full grid-cols-1 gap-3 md:w-[680px] md:grid-cols-[1fr_320px]">
-            <Select
-              label="Unidade"
-              name="unidadeConsultaId"
-              value={unidadeConsultaId}
-              onChange={(event) => {
-                setErro("");
-                setCarregandoConsulta(true);
-                setUnidadeConsultaId(event.target.value);
-              }}
-              options={opcoesUnidades}
-            />
-            <SearchInput
-              placeholder="Buscar remetente, código ou status"
-              value={buscaConsulta}
-              onChange={(event) => setBuscaConsulta(event.target.value)}
-            />
-          </div>
-        </div>
 
-        <TabelaEncomendas
-          encomendas={consultaFiltrada}
-          carregando={carregandoConsulta}
-          vazio="Nenhuma encomenda encontrada para esta unidade."
-        />
-      </section>
+          <TabelaEncomendas
+            encomendas={consultaFiltrada}
+            carregando={carregandoConsulta}
+            vazio="Nenhuma encomenda encontrada para esta unidade."
+          />
+        </section>
+      )}
     </PageWrapper>
   );
 }
