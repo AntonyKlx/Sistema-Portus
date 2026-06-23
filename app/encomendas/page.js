@@ -83,6 +83,53 @@ function TabelaEncomendas({ encomendas, carregando, vazio }) {
   );
 }
 
+function CartaoEncomendaPendente({ encomenda }) {
+  return (
+    <div className="rounded-[8px] border border-purple-100 bg-purple-50 p-4 flex items-start justify-between gap-4">
+      <div className="flex-1">
+        <h3 className="font-semibold text-gray-900">{encomenda.remetente}</h3>
+        <p className="text-sm text-gray-400 mt-2">
+          Chegou em {formatarData(encomenda.dataHoraChegada)}
+        </p>
+        <div className="mt-3 flex items-start gap-2 text-sm" style={{ color: "#7C3AED" }}>
+          <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          </svg>
+          <span>Dirija-se à portaria para retirar a sua encomenda</span>
+        </div>
+      </div>
+      <div className="flex-shrink-0">
+        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: "#F3E8FF", color: "#7C3AED" }}>
+          {encomenda.status}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function CartaoEncomendaRetirada({ encomenda }) {
+  return (
+    <div className="rounded-[8px] border border-gray-200 bg-white p-4 flex items-start justify-between gap-4">
+      <div className="flex-1">
+        <h3 className="font-semibold" style={{ color: "#7C3AED" }}>
+          {encomenda.remetente}
+        </h3>
+        <p className="text-sm text-gray-600 mt-2">
+          Remetente: {encomenda.nomeRetirante || "-"}
+        </p>
+        <p className="text-sm text-gray-600 mt-1">
+          Data: {formatarData(encomenda.dataHoraRetirada)}
+        </p>
+      </div>
+      <div className="flex-shrink-0">
+        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: "#F3E8FF", color: "#7C3AED" }}>
+          {encomenda.status}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function EncomendasPage() {
   const { data: session, status } = useSession();
   const ehMorador = session?.user?.perfil === "morador";
@@ -95,6 +142,7 @@ export default function EncomendasPage() {
   const [consulta, setConsulta] = useState([]);
   const [buscaHistorico, setBuscaHistorico] = useState("");
   const [buscaConsulta, setBuscaConsulta] = useState("");
+  const [buscaPendentes, setBuscaPendentes] = useState("");
   const [carregandoUnidades, setCarregandoUnidades] = useState(true);
   const [carregandoMorador, setCarregandoMorador] = useState(false);
   const [carregandoConsulta, setCarregandoConsulta] = useState(false);
@@ -237,6 +285,16 @@ export default function EncomendasPage() {
     });
   }, [buscaHistorico, historico]);
 
+  const pendentesFiltrado = useMemo(() => {
+    const termo = buscaPendentes.trim().toLowerCase();
+    if (!termo) return pendentes;
+
+    return pendentes.filter((encomenda) => {
+      const texto = `${encomenda.remetente} ${encomenda.codigoPacote}`.toLowerCase();
+      return texto.includes(termo);
+    });
+  }, [buscaPendentes, pendentes]);
+
   const consultaFiltrada = useMemo(() => {
     const termo = buscaConsulta.trim().toLowerCase();
     if (!termo) return consulta;
@@ -257,27 +315,63 @@ export default function EncomendasPage() {
         }}
       />
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard label="Pendentes" value={pendentes.length} />
-        <StatCard label="Histórico" value={historico.length} />
-        {!ehMorador && <StatCard label="Consulta atual" value={consulta.length} />}
-      </section>
+      {ehMorador && (
+        <section className="grid grid-cols-1 gap-4">
+          <div className="rounded-[12px] bg-white border border-gray-200 p-8 flex flex-col items-center justify-center min-h-[200px]">
+            <p className="text-6xl font-bold mb-3" style={{ color: "#7C3AED" }}>{pendentes.length}</p>
+            <p className="text-gray-900 text-lg font-medium">Aguardando Retirada</p>
+          </div>
+        </section>
+      )}
+
+      {!ehMorador && (
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatCard label="Pendentes" value={pendentes.length} />
+          <StatCard label="Histórico" value={historico.length} />
+          <StatCard label="Consulta atual" value={consulta.length} />
+        </section>
+      )}
 
       <Mensagem tipo="erro">{erro}</Mensagem>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="section-title">
-              {ehMorador ? "Minhas encomendas" : "Encomendas da unidade"}
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              {ehMorador
-                ? "Lista de encomendas da sua unidade."
-                : "Encomendas da unidade selecionada."}
-            </p>
+      {ehMorador && (
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <h2 className="section-title">Encomendas Pendentes</h2>
+            <div className="w-full md:w-80">
+              <SearchInput
+                placeholder="Buscar por remetente ou código"
+                value={buscaPendentes}
+                onChange={(event) => setBuscaPendentes(event.target.value)}
+              />
+            </div>
           </div>
-          {!ehMorador && (
+
+          <div className="space-y-3">
+            {carregandoMorador ? (
+              <div className="rounded-[8px] border border-gray-200 bg-white p-8 text-center text-gray-500">
+                Carregando encomendas...
+              </div>
+            ) : pendentesFiltrado.length === 0 ? (
+              <div className="rounded-[8px] border border-gray-200 bg-white p-8 text-center text-gray-500">
+                Você não tem encomendas pendentes.
+              </div>
+            ) : (
+              pendentesFiltrado.map((encomenda) => (
+                <CartaoEncomendaPendente key={encomenda.id} encomenda={encomenda} />
+              ))
+            )}
+          </div>
+        </section>
+      )}
+
+      {!ehMorador && (
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="section-title">Encomendas da unidade</h2>
+              <p className="mt-1 text-sm text-gray-500">Encomendas da unidade selecionada.</p>
+            </div>
             <div className="w-full md:w-[360px]">
               <Select
                 label="Unidade"
@@ -291,34 +385,64 @@ export default function EncomendasPage() {
                 options={opcoesUnidades}
               />
             </div>
-          )}
-        </div>
-
-        <TabelaEncomendas
-          encomendas={pendentes}
-          carregando={carregandoMorador}
-          vazio={ehMorador ? "Você não tem encomendas pendentes." : "Nenhuma encomenda pendente para esta unidade."}
-        />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <h2 className="section-title">Histórico de encomendas</h2>
-          <div className="w-full md:w-80">
-            <SearchInput
-              placeholder="Buscar no histórico"
-              value={buscaHistorico}
-              onChange={(event) => setBuscaHistorico(event.target.value)}
-            />
           </div>
-        </div>
+          <TabelaEncomendas
+            encomendas={pendentes}
+            carregando={carregandoMorador}
+            vazio="Nenhuma encomenda pendente para esta unidade."
+          />
+        </section>
+      )}
 
-        <TabelaEncomendas
-          encomendas={historicoFiltrado}
-          carregando={carregandoMorador}
-          vazio={ehMorador ? "Você não tem encomendas no histórico." : "Nenhuma encomenda encontrada no histórico."}
-        />
-      </section>
+      {ehMorador && (
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <h2 className="section-title">Últimas Retiradas</h2>
+            <div className="w-full md:w-80">
+              <SearchInput
+                placeholder="Buscar por remetente ou código"
+                value={buscaHistorico}
+                onChange={(event) => setBuscaHistorico(event.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-3">
+            {carregandoMorador ? (
+              <div className="rounded-[8px] border border-gray-200 bg-white p-8 text-center text-gray-500">
+                Carregando histórico...
+              </div>
+            ) : historicoFiltrado.length === 0 ? (
+              <div className="rounded-[8px] border border-gray-200 bg-white p-8 text-center text-gray-500">
+                Você não tem encomendas no histórico.
+              </div>
+            ) : (
+              historicoFiltrado.map((encomenda) => (
+                <CartaoEncomendaRetirada key={encomenda.id} encomenda={encomenda} />
+              ))
+            )}
+          </div>
+        </section>
+      )}
+
+      {!ehMorador && (
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <h2 className="section-title">Histórico de encomendas</h2>
+            <div className="w-full md:w-80">
+              <SearchInput
+                placeholder="Buscar no histórico"
+                value={buscaHistorico}
+                onChange={(event) => setBuscaHistorico(event.target.value)}
+              />
+            </div>
+          </div>
+          <TabelaEncomendas
+            encomendas={historicoFiltrado}
+            carregando={carregandoMorador}
+            vazio="Nenhuma encomenda encontrada no histórico."
+          />
+        </section>
+      )}
 
       {!ehMorador && (
         <section className="flex flex-col gap-4">
