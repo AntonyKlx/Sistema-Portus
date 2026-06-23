@@ -1,45 +1,90 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-export async function GET(request) {
+export async function GET() {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const unidadeId = searchParams.get('unidadeId')
-    const unidadeIdNumber = Number(unidadeId)
-    const statusParams = searchParams.get('status')
-
-
-    if (!unidadeId) {
-      return NextResponse.json({ error: 'É preciso informar o id da unidade' }, { status: 400 })
-    }
-
-    if (!Number.isInteger(unidadeIdNumber) || unidadeIdNumber <= 0) {
-      return NextResponse.json({ error: 'ID invláido' }, { status: 400 })
-    }
-
-    const unidadeExistente = await prisma.unidade.findUnique({
-      where: { id: unidadeIdNumber }
-    })
-    if (!unidadeExistente) {
-      return NextResponse.json({ error: 'Unidade não existe' }, { status: 404 })
-    }
-
-    //busco encomendas da unidade x
-    const where = {
-      unidadeId: unidadeIdNumber
-    }
-
-    if (statusParams !== null)
-      where.status = statusParams
-
     const encomendas = await prisma.encomenda.findMany({
-      where,
+      include: {
+        unidade: {
+          include: {
+            moradores: {
+              include: {
+                usuario: true // Para pegar o nome do morador
+              }
+            }
+          }
+        }
+      },
       orderBy: {
-        dataHoraChegada: 'desc'
+        dataHoraChegada: 'desc' // As mais recentes primeiro
       }
-    })
-    return NextResponse.json(encomendas)
+    });
+
+    const formatadas = encomendas.map(enc => ({
+      id: enc.id,
+      apartamento: `Apto ${enc.unidade.numero}`,
+      bloco: enc.unidade.bloco,
+      // Pega o nome do primeiro morador vinculado a unidade
+      morador: enc.unidade.moradores[0]?.usuario.nome || "Unidade Vazia",
+      data: enc.dataHoraChegada,
+      status: enc.status,
+      remetente: enc.remetente,
+      codigo: enc.codigoPacote
+    }));
+
+    return NextResponse.json(formatadas, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao buscar encomendas' }, { status: 500 })
+    console.error("Erro ao buscar encomendas:", error);
+    return NextResponse.json({ message: "Erro ao carregar lista." }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const { numUnidade, remetente, codigoPacote } = body;
+
+    // Validação de campos obrigatórios
+    if (!numUnidade || !remetente || !codigoPacote) {
+      return NextResponse.json(
+        { message: "Todos os campos são obrigatórios." },
+        { status: 400 }
+      );
+    }
+
+    // Buscar a unidade pelo NÚMERO
+    const unidade = await prisma.unidade.findFirst({
+      where: { numero: numUnidade.toString() },
+    });
+
+    // Se a unidade não existir
+    if (!unidade) {
+      return NextResponse.json(
+        { message: `A unidade ${numUnidade} não foi encontrada. Verifique o número.` },
+        { status: 404 }
+      );
+    }
+
+    // Salvar a encomenda
+    const novaEncomenda = await prisma.encomenda.create({
+      data: {
+        remetente,
+        codigoPacote,
+        unidadeId: unidade.id,
+        status: "Aguardando Retirada",
+      },
+    });
+
+    return NextResponse.json(
+      { message: "Encomenda registrada com sucesso!", encomenda: novaEncomenda },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error("Erro no registro:", error);
+    return NextResponse.json(
+      { message: "Erro interno ao registrar encomenda." },
+      { status: 500 }
+    );
   }
 }

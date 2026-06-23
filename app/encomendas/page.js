@@ -1,333 +1,252 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  Badge,
-  PageHeader,
-  PageWrapper,
-  SearchInput,
-  Select,
-  StatCard,
-  Table,
-} from "@/components/ui";
+import { useEffect, useState } from "react";
+import { 
+  StatCard, 
+  Badge, 
+  PageHeader, 
+  PageWrapper, 
+  SearchInput, 
+  Table 
+} from "@/components/ui"; 
 
-const usuarioMock = { name: "Pessoa B", role: "Administrador" };
-const statusPendente = "Aguardando Retirada";
+export default function EncomendasPorteiroPage() {
+  const [encomendas, setEncomendas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [busca, setBusca] = useState("");
 
-function formatarData(data) {
-  if (!data) return "-";
+  // NOVOS ESTADOS PARA O REGISTRO 
+  const [modalRegistroAberto, setModalRegistroAberto] = useState(false);
+  const [aviso, setAviso] = useState({ texto: "", tipo: "" });
+  const [formRegistro, setFormRegistro] = useState({
+    numUnidade: "",
+    remetente: "",
+    codigoPacote: ""
+  });
 
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(data));
-}
+  const carregarEncomendas = async () => {
+    try {
+      const res = await fetch("/api/encomendas");
+      const data = await res.json();
+      setEncomendas(data);
+    } catch (error) {
+      console.error("Erro ao carregar:", error);
+    } finally {
+      setCarregando(false);
+    }
+  };
 
-function formatarUnidade(unidade) {
-  return `Bloco ${unidade.bloco} - Andar ${unidade.andar} - Apto ${unidade.numero}`;
-}
+  const salvarEncomenda = async (e) => {
+    e.preventDefault();
+    setAviso({ texto: "Processando...", tipo: "info" });
 
-function varianteStatus(status) {
-  if (status === statusPendente) return "orange";
-  if (status === "Retirada") return "green";
-  if (status === "Cancelada") return "red";
-  return "blue";
-}
-
-function Mensagem({ tipo, children }) {
-  if (!children) return null;
-
-  const classes =
-    tipo === "erro"
-      ? "border-red-200 bg-red-50 text-red-700"
-      : "border-green-200 bg-green-50 text-green-700";
-
-  return (
-    <div className={`rounded-[8px] border px-4 py-3 text-sm font-medium ${classes}`}>
-      {children}
-    </div>
-  );
-}
-
-function TabelaEncomendas({ encomendas, carregando, vazio }) {
-  return (
-    <Table columns={["Remetente", "Código", "Status", "Chegada", "Retirada", "Retirante"]}>
-      {carregando ? (
-        <tr className="table-row">
-          <td className="table-cell" colSpan={6}>
-            Carregando encomendas...
-          </td>
-        </tr>
-      ) : encomendas.length === 0 ? (
-        <tr className="table-row">
-          <td className="table-cell" colSpan={6}>
-            {vazio}
-          </td>
-        </tr>
-      ) : (
-        encomendas.map((encomenda) => (
-          <tr key={encomenda.id} className="table-row">
-            <td className="table-cell font-medium">{encomenda.remetente}</td>
-            <td className="table-cell">{encomenda.codigoPacote}</td>
-            <td className="table-cell">
-              <Badge label={encomenda.status} variant={varianteStatus(encomenda.status)} />
-            </td>
-            <td className="table-cell">{formatarData(encomenda.dataHoraChegada)}</td>
-            <td className="table-cell">{formatarData(encomenda.dataHoraRetirada)}</td>
-            <td className="table-cell">{encomenda.nomeRetirante || "-"}</td>
-          </tr>
-        ))
-      )}
-    </Table>
-  );
-}
-
-export default function EncomendasPage() {
-  const [unidades, setUnidades] = useState([]);
-  const [unidadeMoradorId, setUnidadeMoradorId] = useState("");
-  const [unidadeConsultaId, setUnidadeConsultaId] = useState("");
-  const [pendentes, setPendentes] = useState([]);
-  const [historico, setHistorico] = useState([]);
-  const [consulta, setConsulta] = useState([]);
-  const [buscaHistorico, setBuscaHistorico] = useState("");
-  const [buscaConsulta, setBuscaConsulta] = useState("");
-  const [carregandoUnidades, setCarregandoUnidades] = useState(true);
-  const [carregandoMorador, setCarregandoMorador] = useState(false);
-  const [carregandoConsulta, setCarregandoConsulta] = useState(false);
-  const [erro, setErro] = useState("");
-
-  useEffect(() => {
-    let ativo = true;
-
-    fetch("/api/unidades")
-      .then(async (response) => {
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Erro ao buscar unidades");
-        }
-
-        if (!ativo) return;
-
-        setUnidades(data);
-
-        if (data.length > 0) {
-          const primeiraUnidade = String(data[0].id);
-          setCarregandoMorador(true);
-          setCarregandoConsulta(true);
-          setUnidadeMoradorId(primeiraUnidade);
-          setUnidadeConsultaId(primeiraUnidade);
-        }
-      })
-      .catch((error) => {
-        if (ativo) setErro(error.message);
-      })
-      .finally(() => {
-        if (ativo) setCarregandoUnidades(false);
+    try {
+      const res = await fetch("/api/encomendas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formRegistro),
       });
 
-    return () => {
-      ativo = false;
-    };
-  }, []);
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Aqui trata unidade não encontrada
+        return setAviso({ texto: data.message, tipo: "erro" });
+      }
+
+      setAviso({ texto: "Registrada com sucesso!", tipo: "sucesso" });
+      
+      // Fecha o modal e limpa tudo
+      setTimeout(() => {
+        setModalRegistroAberto(false);
+        setFormRegistro({ numUnidade: "", remetente: "", codigoPacote: "" });
+        setAviso({ texto: "", tipo: "" });
+        carregarEncomendas(); 
+      }, 1000);
+
+    } catch (error) {
+      setAviso({ texto: "Erro ao conectar com o servidor.", tipo: "erro" });
+    }
+  };
+  
 
   useEffect(() => {
-    if (!unidadeMoradorId) return;
-
-    let ativo = true;
-
-    const paramsPendentes = new URLSearchParams({
-      unidadeId: unidadeMoradorId,
-      status: statusPendente,
-    });
-    const paramsHistorico = new URLSearchParams({ unidadeId: unidadeMoradorId });
-
-    Promise.all([
-      fetch(`/api/encomendas?${paramsPendentes.toString()}`),
-      fetch(`/api/encomendas?${paramsHistorico.toString()}`),
-    ])
-      .then(async ([pendentesResponse, historicoResponse]) => {
-        const pendentesData = await pendentesResponse.json();
-        const historicoData = await historicoResponse.json();
-
-        if (!pendentesResponse.ok) {
-          throw new Error(pendentesData.error || "Erro ao buscar encomendas pendentes");
-        }
-
-        if (!historicoResponse.ok) {
-          throw new Error(historicoData.error || "Erro ao buscar histórico de encomendas");
-        }
-
-        if (!ativo) return;
-
-        setPendentes(pendentesData);
-        setHistorico(historicoData);
-      })
-      .catch((error) => {
-        if (ativo) setErro(error.message);
-      })
-      .finally(() => {
-        if (ativo) setCarregandoMorador(false);
-      });
-
-    return () => {
-      ativo = false;
+    
+    const buscarDados = async () => {
+      try {
+        const res = await fetch("/api/encomendas");
+        const data = await res.json();
+        
+        // só atualizamos o estado se os dados realmente mudarem ou se o componente ainda estiver montado
+        setEncomendas(data);
+      } catch (error) {
+        console.error("Erro ao carregar encomendas:", error);
+      } finally {
+        setCarregando(false);
+      }
     };
-  }, [unidadeMoradorId]);
 
-  useEffect(() => {
-    if (!unidadeConsultaId) return;
+    buscarDados();
+  }, []); // Mantemos o array vazio para rodar apenas uma vez
 
-    let ativo = true;
+  const filtradas = encomendas.filter(enc => {
+    const termo = busca.toLowerCase();
+  
+    return enc.apartamento?.toLowerCase().includes(termo) || 
+           enc.morador?.toLowerCase().includes(termo);
+  });
+  
 
-    const params = new URLSearchParams({ unidadeId: unidadeConsultaId });
-
-    fetch(`/api/encomendas?${params.toString()}`)
-      .then(async (response) => {
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Erro ao consultar encomendas da unidade");
-        }
-
-        if (ativo) setConsulta(data);
-      })
-      .catch((error) => {
-        if (ativo) setErro(error.message);
-      })
-      .finally(() => {
-        if (ativo) setCarregandoConsulta(false);
-      });
-
-    return () => {
-      ativo = false;
-    };
-  }, [unidadeConsultaId]);
-
-  const opcoesUnidades = useMemo(() => {
-    const opcoes = unidades.map((unidade) => ({
-      value: String(unidade.id),
-      label: formatarUnidade(unidade),
-    }));
-
-    return carregandoUnidades
-      ? [{ value: "", label: "Carregando unidades..." }]
-      : opcoes.length > 0
-        ? opcoes
-        : [{ value: "", label: "Nenhuma unidade cadastrada" }];
-  }, [carregandoUnidades, unidades]);
-
-  const historicoFiltrado = useMemo(() => {
-    const termo = buscaHistorico.trim().toLowerCase();
-    if (!termo) return historico;
-
-    return historico.filter((encomenda) => {
-      const texto = `${encomenda.remetente} ${encomenda.codigoPacote} ${encomenda.status}`.toLowerCase();
-      return texto.includes(termo);
-    });
-  }, [buscaHistorico, historico]);
-
-  const consultaFiltrada = useMemo(() => {
-    const termo = buscaConsulta.trim().toLowerCase();
-    if (!termo) return consulta;
-
-    return consulta.filter((encomenda) => {
-      const texto = `${encomenda.remetente} ${encomenda.codigoPacote} ${encomenda.status}`.toLowerCase();
-      return texto.includes(termo);
-    });
-  }, [buscaConsulta, consulta]);
+  const stats = {
+    pendentes: encomendas.filter(e => e.status === "Aguardando Retirada").length,
+    entreguesHoje: encomendas.filter(e => e.status === "Retirada").length,
+    totalSemanal: encomendas.length
+  };
 
   return (
     <PageWrapper>
-      <PageHeader title="Encomendas" user={usuarioMock} />
+      <PageHeader title="Encomendas" />
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard label="Pendentes" value={pendentes.length} />
-        <StatCard label="Histórico do morador" value={historico.length} />
-        <StatCard label="Consulta atual" value={consulta.length} />
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
+        <StatCard label="Encomendas Pendentes" value={stats.pendentes} color="purple" />
+        <StatCard label="Entregues Hoje" value={stats.entreguesHoje} color="purple" />
+        <StatCard label="Total Semanal" value={stats.totalSemanal} color="purple" />
       </section>
 
-      <Mensagem tipo="erro">{erro}</Mensagem>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+        <div className="flex gap-2 w-full md:w-auto">
+          <SearchInput 
+            placeholder="Buscar encomendas..." 
+            value={busca} 
+            onChange={(e) => setBusca(e.target.value)}
+          />
+          <button className="border px-4 py-2 rounded-md flex items-center gap-2 bg-white text-gray-600 border-gray-300">
+             Filtro <span>Icon</span>
+          </button>
+        </div>
+        
+        {/* BOTÃO PARA ABRIR O MODAL */}
+        <button 
+          onClick={() => setModalRegistroAberto(true)}
+          className="bg-[#582688] text-white px-6 py-2 rounded-md hover:bg-[#4f217a] transition-all font-medium"
+        >
+          Registrar encomenda +
+        </button>
+      </div>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="section-title">Tela do morador</h2>
-            <p className="mt-1 text-sm text-gray-500">Encomendas da unidade selecionada.</p>
-          </div>
-          <div className="w-full md:w-[360px]">
-            <Select
-              label="Unidade"
-              name="unidadeMoradorId"
-              value={unidadeMoradorId}
-              onChange={(event) => {
-                setErro("");
-                setCarregandoMorador(true);
-                setUnidadeMoradorId(event.target.value);
-              }}
-              options={opcoesUnidades}
-            />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <Table columns={["Apartamento", "Morador", "Data", "Status", "Ações"]}>
+          {carregando ? (
+            <tr><td colSpan={5} className="p-10 text-center text-gray-400">Carregando encomendas...</td></tr>
+          ) : filtradas.map((enc) => (
+            <tr key={enc.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+              <td className="p-4 text-gray-700 font-medium">{enc.apartamento}</td>
+              <td className="p-4 text-gray-600">{enc.morador}</td>
+              <td className="p-4 text-sm text-gray-500">
+                {new Date(enc.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+              </td>
+              <td className="p-4">
+                <Badge 
+                  label={enc.status === "Aguardando Retirada" ? "Pendente" : "Entregue"} 
+                  variant={enc.status === "Aguardando Retirada" ? "orange" : "green"} 
+                />
+              </td>
+              <td className="p-4 flex gap-3">
+                <button 
+                  title="Dar baixa"
+                  className="p-1 hover:bg-green-100 rounded text-green-600 transition-colors"
+                  onClick={() => alert(`Dar baixa na encomenda ${enc.id}`)}
+                >
+                  <CheckIcon />
+                </button>
+                <button className="p-1 hover:bg-gray-200 rounded text-gray-950 transition-colors">
+                  <EditIcon />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </Table>
+      </div>
+
+      {/*  MODAL  */}
+      {modalRegistroAberto && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-purple-100">
+            <h2 className="text-2xl font-bold text-purple-900 mb-6">Registrar Pacote</h2>
+            
+            <form onSubmit={salvarEncomenda} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Apartamento / Unidade</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Ex: 101"
+                  className="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-purple-300 outline-none transition-all"
+                  value={formRegistro.numUnidade}
+                  onChange={(e) => setFormRegistro({...formRegistro, numUnidade: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Remetente</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Ex: Amazon, Mercado Livre"
+                  className="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-purple-300 outline-none transition-all"
+                  value={formRegistro.remetente}
+                  onChange={(e) => setFormRegistro({...formRegistro, remetente: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Código do Pacote</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Ex: BR7721901"
+                  className="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-purple-300 outline-none transition-all"
+                  value={formRegistro.codigoPacote}
+                  onChange={(e) => setFormRegistro({...formRegistro, codigoPacote: e.target.value})}
+                />
+              </div>
+
+              {aviso.texto && (
+                <div className={`p-3 rounded-lg text-sm font-medium ${
+                  aviso.tipo === 'erro' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+                }`}>
+                  {aviso.texto}
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-8">
+                <button 
+                  type="button"
+                  onClick={() => { setModalRegistroAberto(false); setAviso({texto:"", tipo:""}); }}
+                  className="flex-1 px-4 py-3 text-gray-500 font-semibold hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  style={{ backgroundColor: '#F6ECFF' }}
+                  className="flex-1 px-4 py-3 text-[#582688] font-bold rounded-xl hover:bg-[#ebd9ff] transition-colors shadow-sm"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <TabelaEncomendas
-          encomendas={pendentes}
-          carregando={carregandoMorador}
-          vazio="Nenhuma encomenda pendente para esta unidade."
-        />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <h2 className="section-title">Histórico de encomendas</h2>
-          <div className="w-full md:w-80">
-            <SearchInput
-              placeholder="Buscar no histórico"
-              value={buscaHistorico}
-              onChange={(event) => setBuscaHistorico(event.target.value)}
-            />
-          </div>
-        </div>
-
-        <TabelaEncomendas
-          encomendas={historicoFiltrado}
-          carregando={carregandoMorador}
-          vazio="Nenhuma encomenda encontrada no histórico."
-        />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="section-title">Consulta por unidade</h2>
-            <p className="mt-1 text-sm text-gray-500">Filtro para porteiro e síndico.</p>
-          </div>
-          <div className="grid w-full grid-cols-1 gap-3 md:w-[680px] md:grid-cols-[1fr_320px]">
-            <Select
-              label="Unidade"
-              name="unidadeConsultaId"
-              value={unidadeConsultaId}
-              onChange={(event) => {
-                setErro("");
-                setCarregandoConsulta(true);
-                setUnidadeConsultaId(event.target.value);
-              }}
-              options={opcoesUnidades}
-            />
-            <SearchInput
-              placeholder="Buscar remetente, código ou status"
-              value={buscaConsulta}
-              onChange={(event) => setBuscaConsulta(event.target.value)}
-            />
-          </div>
-        </div>
-
-        <TabelaEncomendas
-          encomendas={consultaFiltrada}
-          carregando={carregandoConsulta}
-          vazio="Nenhuma encomenda encontrada para esta unidade."
-        />
-      </section>
+      )}
     </PageWrapper>
   );
+}
+
+function CheckIcon() {
+  return <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
+}
+
+function EditIcon() {
+  return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
 }
