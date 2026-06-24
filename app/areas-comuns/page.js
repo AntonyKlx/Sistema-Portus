@@ -1,20 +1,50 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Edit2, Plus, Trash2, X } from "lucide-react";
+import { Clock3, Plus, Settings, Trash2, Users, X } from "lucide-react";
 import {
   Button,
-  IconButton,
   Input,
   PageHeader,
   PageWrapper,
   SearchInput,
   StatCard,
-  Table,
 } from "@/components/ui";
 
 const usuarioMock = { name: "Pessoa B", role: "Administrador" };
 const formInicial = { nome: "", descricao: "" };
+const statusReservaAtiva = ["Pendente", "Aprovada"];
+
+function ehHoje(data) {
+  const dataReserva = new Date(data);
+  const hoje = new Date();
+
+  return (
+    dataReserva.getFullYear() === hoje.getFullYear() &&
+    dataReserva.getMonth() === hoje.getMonth() &&
+    dataReserva.getDate() === hoje.getDate()
+  );
+}
+
+function possuiReservaAtivaHoje(area) {
+  return area.reservas?.some((reserva) => statusReservaAtiva.includes(reserva.status) && ehHoje(reserva.dataHora));
+}
+
+function formatarHorario(data) {
+  if (!data) return "08:00";
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(data));
+}
+
+function formatarAntecedencia(horas, fallback) {
+  const valor = Number.isFinite(Number(horas)) ? Number(horas) : fallback;
+  if (valor >= 24 && valor % 24 === 0) return `${valor / 24} dias antecedência`;
+  return `${valor}h antecedência`;
+}
 
 export default function AreasComunsPage() {
   const [areas, setAreas] = useState([]);
@@ -25,6 +55,7 @@ export default function AreasComunsPage() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
   async function carregarAreas() {
     setCarregando(true);
@@ -81,6 +112,23 @@ export default function AreasComunsPage() {
     });
   }, [areas, busca]);
 
+  const reservasAtivasHoje = useMemo(
+    () =>
+      areas.reduce((total, area) => {
+        const reservasDaArea = area.reservas?.filter(
+          (reserva) => statusReservaAtiva.includes(reserva.status) && ehHoje(reserva.dataHora),
+        );
+
+        return total + (reservasDaArea?.length ?? 0);
+      }, 0),
+    [areas],
+  );
+
+  const areasReservadasHoje = useMemo(
+    () => areas.filter((area) => possuiReservaAtivaHoje(area)).length,
+    [areas],
+  );
+
   function atualizarCampo(event) {
     const { name, value } = event.target;
     setForm((formAtual) => ({ ...formAtual, [name]: value }));
@@ -92,6 +140,7 @@ export default function AreasComunsPage() {
       nome: area.nome,
       descricao: area.descricao || "",
     });
+    setMostrarFormulario(true);
     setMensagem("");
     setErro("");
   }
@@ -99,6 +148,15 @@ export default function AreasComunsPage() {
   function cancelarEdicao() {
     setEditandoId(null);
     setForm(formInicial);
+    setMostrarFormulario(false);
+  }
+
+  function abrirCadastro() {
+    setEditandoId(null);
+    setForm(formInicial);
+    setMensagem("");
+    setErro("");
+    setMostrarFormulario(true);
   }
 
   async function salvarArea(event) {
@@ -178,77 +236,129 @@ export default function AreasComunsPage() {
 
   return (
     <PageWrapper>
-      <PageHeader title="Cadastro de áreas comuns" user={usuarioMock} />
+      <PageHeader title="Áreas Comuns" user={usuarioMock} />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard label="Áreas cadastradas" value={areas.length} />
-        <StatCard label="Com descrição" value={areas.filter((area) => area.descricao).length} />
-        <StatCard label="Exibindo" value={areasFiltradas.length} />
+        <StatCard label="Total de Áreas" value={areas.length} />
+        <StatCard label="Reservas Ativas Hoje" value={reservasAtivasHoje} />
+        <StatCard label="Áreas Disponíveis Agora" value={Math.max(areas.length - areasReservadasHoje, 0)} />
       </section>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
-        <form onSubmit={salvarArea} className="table-wrapper h-fit p-5">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="section-title">{editandoId ? "Editar área comum" : "Nova área comum"}</h2>
-            {editandoId && (
+      <section className="flex flex-col gap-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="w-full lg:max-w-[470px]">
+            <SearchInput
+              placeholder="Buscar área..."
+              value={busca}
+              onChange={(event) => setBusca(event.target.value)}
+            />
+          </div>
+
+          <Button onClick={abrirCadastro} className="justify-center">
+            Cadastrar Área
+            <Plus size={18} />
+          </Button>
+        </div>
+
+        {mostrarFormulario && (
+          <form onSubmit={salvarArea} className="table-wrapper p-5">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="section-title">{editandoId ? "Editar área comum" : "Nova área comum"}</h2>
               <button
                 type="button"
                 onClick={cancelarEdicao}
-                title="Cancelar edição"
+                title="Fechar formulário"
                 className="icon-btn"
               >
                 <X size={17} />
               </button>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <Input label="Nome" name="nome" value={form.nome} onChange={atualizarCampo} required />
-            <Input label="Descrição" name="descricao" value={form.descricao} onChange={atualizarCampo} />
-
-            <Button type="submit" className="justify-center" disabled={salvando}>
-              <Plus size={16} />
-              {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Cadastrar área"}
-            </Button>
-          </div>
-        </form>
-
-        <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <h2 className="section-title">Áreas comuns</h2>
-            <div className="w-full md:w-80">
-              <SearchInput placeholder="Buscar por nome ou descrição" value={busca} onChange={(event) => setBusca(event.target.value)} />
             </div>
-          </div>
 
-          {mensagem && <div className="rounded-[8px] border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">{mensagem}</div>}
-          {erro && <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_2fr_auto] md:items-end">
+              <Input label="Nome" name="nome" value={form.nome} onChange={atualizarCampo} required />
+              <Input label="Descrição" name="descricao" value={form.descricao} onChange={atualizarCampo} />
+              <Button type="submit" className="justify-center whitespace-nowrap" disabled={salvando}>
+                <Plus size={16} />
+                {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Cadastrar"}
+              </Button>
+            </div>
+          </form>
+        )}
 
-          <Table columns={["Nome", "Descrição", "Ações"]}>
-            {carregando ? (
-              <tr className="table-row">
-                <td className="table-cell" colSpan={3}>Carregando áreas comuns...</td>
-              </tr>
-            ) : areasFiltradas.length === 0 ? (
-              <tr className="table-row">
-                <td className="table-cell" colSpan={3}>Nenhuma área comum encontrada.</td>
-              </tr>
-            ) : (
-              areasFiltradas.map((area) => (
-                <tr key={area.id} className="table-row">
-                  <td className="table-cell font-medium">{area.nome}</td>
-                  <td className="table-cell">{area.descricao || "-"}</td>
-                  <td className="table-cell">
-                    <div className="flex items-center gap-2">
-                      <IconButton icon={Edit2} title="Editar área comum" onClick={() => iniciarEdicao(area)} />
-                      <IconButton icon={Trash2} title="Remover área comum" onClick={() => removerArea(area.id)} />
+        {mensagem && <div className="rounded-[8px] border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">{mensagem}</div>}
+        {erro && <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
+
+        {carregando ? (
+          <div className="table-wrapper p-5 text-sm text-gray-500">Carregando áreas comuns...</div>
+        ) : areasFiltradas.length === 0 ? (
+          <div className="table-wrapper p-5 text-sm text-gray-500">Nenhuma área comum encontrada.</div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {areasFiltradas.map((area) => {
+              const reservada = possuiReservaAtivaHoje(area);
+              const regras = area.regras;
+
+              return (
+                <article key={area.id} className="overflow-hidden rounded-[13px] border border-[#C7C7C7] bg-white shadow-card">
+                  <div className="relative h-[92px] bg-[#F3E8FF]">
+                    <span className={`absolute right-3 top-3 rounded-full border px-3 py-1 text-xs font-medium ${
+                      reservada
+                        ? "border-[#7C3AED] text-[#7C3AED]"
+                        : "border-green-500 text-green-600"
+                    }`}>
+                      {reservada ? "Reservado" : "Disponível"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-5 p-5">
+                    <div>
+                      <h2 className="text-[16px] font-semibold leading-6 text-gray-950">{area.nome}</h2>
+                      <p className="text-xs text-gray-600">{area.descricao || "Espaço disponível para reservas"}</p>
                     </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </Table>
-        </section>
+
+                    <div className="grid grid-cols-1 gap-3 text-sm text-gray-600 sm:grid-cols-2">
+                      <span className="flex items-center gap-2">
+                        <Clock3 size={15} />
+                        {formatarHorario(regras?.horarioPermitidoInicio)}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Clock3 size={15} />
+                        {formatarAntecedencia(regras?.antecedenciaMinimaReserva, 168)}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Users size={15} />
+                        Máx. {regras?.limiteReservasAtivas ?? 20} pessoas
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <Users size={15} />
+                        Canc. {regras?.antecedenciaMinCancelamento ?? 24}h antes
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="button"
+                        onClick={() => iniciarEdicao(area)}
+                        className="inline-flex items-center justify-center gap-2 rounded-[8px] border border-[#9CA3AF] px-5 py-2.5 text-sm font-medium text-[#7C3AED] transition hover:bg-[#F6ECFF]"
+                      >
+                        Editar Regras
+                        <Settings size={17} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removerArea(area.id)}
+                        className="inline-flex items-center justify-center gap-2 rounded-[8px] border border-red-500 px-5 py-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50"
+                      >
+                        Remover
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
     </PageWrapper>
   );

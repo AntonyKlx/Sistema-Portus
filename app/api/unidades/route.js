@@ -7,7 +7,25 @@ export async function GET() {
   if (response) return response
 
   try {
-    const unidades = await prisma.unidade.findMany();
+    const unidades = await prisma.unidade.findMany({
+      include: {
+        moradores: {
+          select: {
+            id: true,
+            usuario: {
+              select: {
+                nome: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [
+        { bloco: 'asc' },
+        { andar: 'asc' },
+        { numero: 'asc' },
+      ],
+    });
     return NextResponse.json(unidades);
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao buscar unidades' }, { status: 500 });

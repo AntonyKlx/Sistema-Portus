@@ -7,7 +7,24 @@ export async function GET() {
   if (response) return response
 
   try {
-    const areas = await prisma.areaComum.findMany();
+    const areas = await prisma.areaComum.findMany({
+      include: {
+        regras: true,
+        reservas: {
+          select: {
+            id: true,
+            dataHora: true,
+            status: true,
+          },
+          orderBy: {
+            dataHora: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        nome: 'asc',
+      },
+    });
     return NextResponse.json(areas);
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao buscar áreas comuns' }, { status: 500 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Edit2, Plus, Trash2, X } from "lucide-react";
+import { Edit2, Plus, SlidersHorizontal, Trash2, X } from "lucide-react";
 import {
   Button,
   IconButton,
@@ -25,6 +25,8 @@ export default function ApartamentosPage() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [filtroOcupacao, setFiltroOcupacao] = useState("todos");
 
   async function carregarUnidades() {
     setCarregando(true);
@@ -73,13 +75,29 @@ export default function ApartamentosPage() {
 
   const unidadesFiltradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    if (!termo) return unidades;
 
     return unidades.filter((unidade) => {
-      const texto = `${unidade.bloco} ${unidade.andar} ${unidade.numero}`.toLowerCase();
-      return texto.includes(termo);
+      const ocupada = unidade.moradores?.length > 0;
+      const nomesMoradores = unidade.moradores
+        ?.map((morador) => morador.usuario?.nome)
+        .filter(Boolean)
+        .join(" ");
+      const texto = `${unidade.bloco} ${unidade.andar} ${unidade.numero} ${nomesMoradores ?? ""}`.toLowerCase();
+      const passaBusca = !termo || texto.includes(termo);
+      const passaFiltro =
+        filtroOcupacao === "todos" ||
+        (filtroOcupacao === "ocupados" && ocupada) ||
+        (filtroOcupacao === "vagos" && !ocupada);
+
+      return passaBusca && passaFiltro;
     });
-  }, [busca, unidades]);
+  }, [busca, filtroOcupacao, unidades]);
+
+  const totalOcupados = useMemo(
+    () => unidades.filter((unidade) => unidade.moradores?.length > 0).length,
+    [unidades],
+  );
+  const totalVagos = unidades.length - totalOcupados;
 
   function atualizarCampo(event) {
     const { name, value } = event.target;
@@ -93,6 +111,7 @@ export default function ApartamentosPage() {
       andar: String(unidade.andar),
       numero: unidade.numero,
     });
+    setMostrarFormulario(true);
     setMensagem("");
     setErro("");
   }
@@ -100,6 +119,23 @@ export default function ApartamentosPage() {
   function cancelarEdicao() {
     setEditandoId(null);
     setForm(formInicial);
+    setMostrarFormulario(false);
+  }
+
+  function abrirCadastro() {
+    setEditandoId(null);
+    setForm(formInicial);
+    setMensagem("");
+    setErro("");
+    setMostrarFormulario(true);
+  }
+
+  function alternarFiltro() {
+    setFiltroOcupacao((filtroAtual) => {
+      if (filtroAtual === "todos") return "ocupados";
+      if (filtroAtual === "ocupados") return "vagos";
+      return "todos";
+    });
   }
 
   async function salvarUnidade(event) {
@@ -157,68 +193,99 @@ export default function ApartamentosPage() {
 
   return (
     <PageWrapper>
-      <PageHeader title="Cadastro de apartamentos" user={usuarioMock} />
+      <PageHeader title="Apartamentos" user={usuarioMock} />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard label="Unidades cadastradas" value={unidades.length} />
-        <StatCard label="Blocos" value={new Set(unidades.map((unidade) => unidade.bloco)).size} />
-        <StatCard label="Exibindo" value={unidadesFiltradas.length} />
+        <StatCard label="Total de Unidades" value={unidades.length} />
+        <StatCard label="Ocupados" value={totalOcupados} />
+        <StatCard label="Vagos" value={totalVagos} />
       </section>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[360px_1fr]">
-        <form onSubmit={salvarUnidade} className="table-wrapper h-fit p-5">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="section-title">{editandoId ? "Editar unidade" : "Nova unidade"}</h2>
-            {editandoId && (
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex w-full flex-col gap-3 sm:flex-row lg:max-w-[520px]">
+            <div className="min-w-0 flex-1">
+              <SearchInput
+                placeholder="Buscar apartamento..."
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+              />
+            </div>
+            <button type="button" onClick={alternarFiltro} className="btn-filter justify-center">
+              Filtro
+              <SlidersHorizontal size={16} />
+              {filtroOcupacao !== "todos" && (
+                <span className="rounded-full bg-[#F6ECFF] px-2 py-0.5 text-[11px] font-semibold text-[#582688]">
+                  {filtroOcupacao}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <Button onClick={abrirCadastro} className="justify-center">
+            Cadastrar Unidade
+            <Plus size={18} />
+          </Button>
+        </div>
+
+        {mostrarFormulario && (
+          <form onSubmit={salvarUnidade} className="table-wrapper p-5">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="section-title">{editandoId ? "Editar unidade" : "Nova unidade"}</h2>
               <button
                 type="button"
                 onClick={cancelarEdicao}
-                title="Cancelar edição"
+                title="Fechar formulário"
                 className="icon-btn"
               >
                 <X size={17} />
               </button>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <Input label="Bloco" name="bloco" value={form.bloco} onChange={atualizarCampo} required />
-            <Input label="Andar" name="andar" type="number" value={form.andar} onChange={atualizarCampo} required />
-            <Input label="Número" name="numero" value={form.numero} onChange={atualizarCampo} required />
-
-            <Button type="submit" className="justify-center" disabled={salvando}>
-              <Plus size={16} />
-              {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Cadastrar unidade"}
-            </Button>
-          </div>
-        </form>
-
-        <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <h2 className="section-title">Unidades</h2>
-            <div className="w-full md:w-80">
-              <SearchInput placeholder="Buscar por bloco, andar ou número" value={busca} onChange={(event) => setBusca(event.target.value)} />
             </div>
-          </div>
 
-          {mensagem && <div className="rounded-[8px] border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">{mensagem}</div>}
-          {erro && <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+              <Input label="Bloco" name="bloco" value={form.bloco} onChange={atualizarCampo} required />
+              <Input label="Andar" name="andar" type="number" value={form.andar} onChange={atualizarCampo} required />
+              <Input label="Número" name="numero" value={form.numero} onChange={atualizarCampo} required />
+              <Button type="submit" className="justify-center whitespace-nowrap" disabled={salvando}>
+                <Plus size={16} />
+                {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Cadastrar"}
+              </Button>
+            </div>
+          </form>
+        )}
 
-          <Table columns={["Bloco", "Andar", "Número", "Ações"]}>
-            {carregando ? (
-              <tr className="table-row">
-                <td className="table-cell" colSpan={4}>Carregando unidades...</td>
-              </tr>
-            ) : unidadesFiltradas.length === 0 ? (
-              <tr className="table-row">
-                <td className="table-cell" colSpan={4}>Nenhuma unidade encontrada.</td>
-              </tr>
-            ) : (
-              unidadesFiltradas.map((unidade) => (
+        {mensagem && <div className="rounded-[8px] border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">{mensagem}</div>}
+        {erro && <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
+
+        <Table columns={["Apartamento", "Bloco", "Andar", "Morador", "Ações"]} title="Tabela de Apartamentos">
+          {carregando ? (
+            <tr className="table-row">
+              <td className="table-cell" colSpan={5}>Carregando unidades...</td>
+            </tr>
+          ) : unidadesFiltradas.length === 0 ? (
+            <tr className="table-row">
+              <td className="table-cell" colSpan={5}>Nenhuma unidade encontrada.</td>
+            </tr>
+          ) : (
+            unidadesFiltradas.map((unidade) => {
+              const moradores = unidade.moradores
+                ?.map((morador) => morador.usuario?.nome)
+                .filter(Boolean);
+
+              return (
                 <tr key={unidade.id} className="table-row">
-                  <td className="table-cell font-medium">{unidade.bloco}</td>
-                  <td className="table-cell">{unidade.andar}</td>
-                  <td className="table-cell">{unidade.numero}</td>
+                  <td className="table-cell font-medium">Apt {unidade.numero}</td>
+                  <td className="table-cell">Bloco {unidade.bloco}</td>
+                  <td className="table-cell">{unidade.andar} Andar</td>
+                  <td className="table-cell">
+                    {moradores?.length ? (
+                      moradores.join(", ")
+                    ) : (
+                      <span className="inline-flex min-w-[84px] justify-center rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600">
+                        Vago
+                      </span>
+                    )}
+                  </td>
                   <td className="table-cell">
                     <div className="flex items-center gap-2">
                       <IconButton icon={Edit2} title="Editar unidade" onClick={() => iniciarEdicao(unidade)} />
@@ -226,10 +293,10 @@ export default function ApartamentosPage() {
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </Table>
-        </section>
+              );
+            })
+          )}
+        </Table>
       </section>
     </PageWrapper>
   );
