@@ -138,6 +138,17 @@ async function main() {
 
     await prisma.usuario.create({
       data: {
+        nome: "Admin Master",
+        email: "master@portus.com",
+        senha: senhaPadrao,
+        ativo: true,
+        tentativasIncorretas: 0,
+        perfilId: perfis.adminMaster.id,
+      },
+    });
+
+    await prisma.usuario.create({
+      data: {
         nome: "Ana Sindica",
         email: "ana.sindica@email.com",
         senha: senhaPadrao,

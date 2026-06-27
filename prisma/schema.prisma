@@ -134,6 +134,18 @@ model BackupReserva {
   mensagemErro    String?
 }
 
+model BackupBanco {
+  id            Int       @id @default(autoincrement())
+  status        String    @default("Concluido")
+  nomeArquivo   String?
+  caminho       String?
+  tamanhoBytes  BigInt?
+  solicitadoPor String?
+  solicitadoEm  DateTime  @default(now())
+  concluidoEm   DateTime?
+  mensagemErro  String?   @db.Text
+}
+
 model LogAcesso {
   id            Int      @id @default(autoincrement())
   dataHora      DateTime @default(now())

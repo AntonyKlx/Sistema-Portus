@@ -11,10 +11,10 @@ import {
   Users,
   Building2,
   Layers,
-  ShieldCheck,
   UserCog,
   ScrollText,
   LogOut,
+  Database,
 } from "lucide-react";
 
 const navItems = [
@@ -24,8 +24,8 @@ const navItems = [
   { label: "Moradores", href: "/moradores", icon: Users },
   { label: "Apartamentos", href: "/apartamentos", icon: Building2 },
   { label: "Áreas Comuns", href: "/areas-comuns", icon: Layers },
-  { label: "Perfis de Acesso", href: "/administradores", icon: ShieldCheck },
-  { label: "Administradores", href: "/admins", icon: UserCog, perfis: ["adminMaster"] },
+  { label: "Administradores", href: "/administradores", icon: UserCog, perfis: ["adminMaster"] },
+  { label: "Backups", href: "/backups", icon: Database, perfis: ["adminMaster"] },
   { label: "Logs", href: "/logs", icon: ScrollText },
 ];
 
