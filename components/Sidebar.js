@@ -29,14 +29,21 @@ const navItems = [
   { label: "Logs", href: "/logs", icon: ScrollText },
 ];
 
+const moradorNavItems = [
+  { label: "Encomendas", href: "/encomendas", icon: Package },
+  { label: "Painel", href: "/dashboard/morador", icon: LayoutDashboard },
+  { label: "Reservas", href: "/reservas", icon: CalendarDays },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const perfil = session?.user?.perfil;
 
-  const itensVisiveis = navItems.filter(
-    (item) => !item.perfis || item.perfis.includes(perfil)
-  );
+  const itensVisiveis =
+    perfil === "morador"
+      ? moradorNavItems
+      : navItems.filter((item) => !item.perfis || item.perfis.includes(perfil));
 
   return (
     // 1. Aumentamos a largura para 260px (w-[260px]) e removemos o padding horizontal (px-4)
@@ -59,7 +66,7 @@ export default function Sidebar() {
       {/* O flex-1 empurra o botão de logout lá para o final */}
       <nav className="flex flex-col flex-1">
         {itensVisiveis.map(({ label, href, icon: Icon }) => {
-          const isActive = pathname === href;
+          const isActive = pathname === href || (href.startsWith("/dashboard") && pathname.startsWith(href));
 
           return (
             <Link

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { Info } from "lucide-react";
 import {
   Badge,
   PageHeader,
@@ -21,6 +22,33 @@ function formatarData(data) {
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
     timeStyle: "short",
+  }).format(new Date(data));
+}
+
+function formatarChegada(data) {
+  if (!data) return "-";
+
+  const dataFormatada = new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(data));
+  const horaFormatada = new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(data));
+
+  return `${dataFormatada} às ${horaFormatada}`;
+}
+
+function formatarDataCurta(data) {
+  if (!data) return "-";
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   }).format(new Date(data));
 }
 
@@ -85,21 +113,19 @@ function TabelaEncomendas({ encomendas, carregando, vazio }) {
 
 function CartaoEncomendaPendente({ encomenda }) {
   return (
-    <div className="rounded-[8px] border border-purple-100 bg-purple-50 p-4 flex items-start justify-between gap-4">
+    <div className="flex min-h-[108px] items-start justify-between gap-4 rounded-[13px] border border-[#E9D5FF] bg-[#F3E8FF] p-5 shadow-card">
       <div className="flex-1">
-        <h3 className="font-semibold text-gray-900">{encomenda.remetente}</h3>
-        <p className="text-sm text-gray-400 mt-2">
-          Chegou em {formatarData(encomenda.dataHoraChegada)}
+        <h3 className="text-[17px] font-semibold text-gray-700">{encomenda.remetente}</h3>
+        <p className="mt-2 text-sm text-gray-500">
+          Chegou em {formatarChegada(encomenda.dataHoraChegada)}
         </p>
-        <div className="mt-3 flex items-start gap-2 text-sm" style={{ color: "#7C3AED" }}>
-          <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
+        <div className="mt-3 flex items-start gap-1.5 text-xs font-medium text-[#6D00B5]">
+          <Info size={14} className="mt-0.5 shrink-0" />
           <span>Dirija-se à portaria para retirar a sua encomenda</span>
         </div>
       </div>
       <div className="flex-shrink-0">
-        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: "#F3E8FF", color: "#7C3AED" }}>
+        <span className="inline-block rounded-full bg-[#E9D5FF] px-3 py-1 text-[10px] font-semibold uppercase text-[#6D00B5]">
           {encomenda.status}
         </span>
       </div>
@@ -109,20 +135,20 @@ function CartaoEncomendaPendente({ encomenda }) {
 
 function CartaoEncomendaRetirada({ encomenda }) {
   return (
-    <div className="rounded-[8px] border border-gray-200 bg-white p-4 flex items-start justify-between gap-4">
+    <div className="flex min-h-[104px] items-start justify-between gap-4 rounded-[13px] border border-[#C7C7C7] bg-white p-4 shadow-card">
       <div className="flex-1">
-        <h3 className="font-semibold" style={{ color: "#7C3AED" }}>
+        <h3 className="text-[17px] font-semibold text-[#6D00B5]">
           {encomenda.remetente}
         </h3>
-        <p className="text-sm text-gray-600 mt-2">
+        <p className="mt-2 text-sm text-gray-700">
           Remetente: {encomenda.nomeRetirante || "-"}
         </p>
-        <p className="text-sm text-gray-600 mt-1">
-          Data: {formatarData(encomenda.dataHoraRetirada)}
+        <p className="mt-1 text-sm text-gray-700">
+          Data: {formatarDataCurta(encomenda.dataHoraRetirada || encomenda.dataHoraChegada)}
         </p>
       </div>
       <div className="flex-shrink-0">
-        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: "#F3E8FF", color: "#7C3AED" }}>
+        <span className="inline-block rounded-full bg-gray-200 px-2.5 py-1 text-[10px] font-semibold uppercase text-gray-800">
           {encomenda.status}
         </span>
       </div>
@@ -142,7 +168,6 @@ export default function EncomendasPage() {
   const [consulta, setConsulta] = useState([]);
   const [buscaHistorico, setBuscaHistorico] = useState("");
   const [buscaConsulta, setBuscaConsulta] = useState("");
-  const [buscaPendentes, setBuscaPendentes] = useState("");
   const [carregandoUnidades, setCarregandoUnidades] = useState(true);
   const [carregandoMorador, setCarregandoMorador] = useState(false);
   const [carregandoConsulta, setCarregandoConsulta] = useState(false);
@@ -285,15 +310,10 @@ export default function EncomendasPage() {
     });
   }, [buscaHistorico, historico]);
 
-  const pendentesFiltrado = useMemo(() => {
-    const termo = buscaPendentes.trim().toLowerCase();
-    if (!termo) return pendentes;
-
-    return pendentes.filter((encomenda) => {
-      const texto = `${encomenda.remetente} ${encomenda.codigoPacote}`.toLowerCase();
-      return texto.includes(termo);
-    });
-  }, [buscaPendentes, pendentes]);
+  const retiradasMorador = useMemo(
+    () => historico.filter((encomenda) => encomenda.status === "Retirada").slice(0, 5),
+    [historico],
+  );
 
   const consultaFiltrada = useMemo(() => {
     const termo = buscaConsulta.trim().toLowerCase();
@@ -307,19 +327,28 @@ export default function EncomendasPage() {
 
   return (
     <PageWrapper>
-      <PageHeader
-        title="Encomendas"
-        user={{
-          name: session?.user?.name ?? usuarioMock.name,
-          role: session?.user?.perfil ?? usuarioMock.role,
-        }}
-      />
+      {ehMorador ? (
+        <header className="flex flex-col gap-1">
+          <h1 className="page-title text-gray-700">Encomendas</h1>
+          <p className="text-sm font-medium text-[#6D00B5]">Visualize suas encomendas.</p>
+        </header>
+      ) : (
+        <PageHeader
+          title="Encomendas"
+          user={{
+            name: session?.user?.name ?? usuarioMock.name,
+            role: session?.user?.perfil ?? usuarioMock.role,
+          }}
+        />
+      )}
 
       {ehMorador && (
         <section className="grid grid-cols-1 gap-4">
-          <div className="rounded-[12px] bg-white border border-gray-200 p-8 flex flex-col items-center justify-center min-h-[200px]">
-            <p className="text-6xl font-bold mb-3" style={{ color: "#7C3AED" }}>{pendentes.length}</p>
-            <p className="text-gray-900 text-lg font-medium">Aguardando Retirada</p>
+          <div className="flex min-h-[110px] flex-col items-center justify-center rounded-[13px] border border-[#C7C7C7] bg-white p-8 shadow-card">
+            <p className="text-[42px] font-bold leading-none text-[#6D00B5]">
+              {String(pendentes.length).padStart(2, "0")}
+            </p>
+            <p className="mt-1 text-sm font-medium text-gray-900">Aguardando Retirada</p>
           </div>
         </section>
       )}
@@ -336,28 +365,19 @@ export default function EncomendasPage() {
 
       {ehMorador && (
         <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <h2 className="section-title">Encomendas Pendentes</h2>
-            <div className="w-full md:w-80">
-              <SearchInput
-                placeholder="Buscar por remetente ou código"
-                value={buscaPendentes}
-                onChange={(event) => setBuscaPendentes(event.target.value)}
-              />
-            </div>
-          </div>
+          <h2 className="text-[24px] font-semibold text-gray-700">Encomendas Pendentes</h2>
 
           <div className="space-y-3">
             {carregandoMorador ? (
-              <div className="rounded-[8px] border border-gray-200 bg-white p-8 text-center text-gray-500">
+              <div className="rounded-[13px] border border-gray-200 bg-white p-8 text-center text-gray-500">
                 Carregando encomendas...
               </div>
-            ) : pendentesFiltrado.length === 0 ? (
-              <div className="rounded-[8px] border border-gray-200 bg-white p-8 text-center text-gray-500">
+            ) : pendentes.length === 0 ? (
+              <div className="rounded-[13px] border border-gray-200 bg-white p-8 text-center text-gray-500">
                 Você não tem encomendas pendentes.
               </div>
             ) : (
-              pendentesFiltrado.map((encomenda) => (
+              pendentes.map((encomenda) => (
                 <CartaoEncomendaPendente key={encomenda.id} encomenda={encomenda} />
               ))
             )}
@@ -396,27 +416,19 @@ export default function EncomendasPage() {
 
       {ehMorador && (
         <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <h2 className="section-title">Últimas Retiradas</h2>
-            <div className="w-full md:w-80">
-              <SearchInput
-                placeholder="Buscar por remetente ou código"
-                value={buscaHistorico}
-                onChange={(event) => setBuscaHistorico(event.target.value)}
-              />
-            </div>
-          </div>
+          <h2 className="text-[24px] font-semibold text-gray-950">Últimas Retiradas</h2>
+
           <div className="space-y-3">
             {carregandoMorador ? (
-              <div className="rounded-[8px] border border-gray-200 bg-white p-8 text-center text-gray-500">
+              <div className="rounded-[13px] border border-gray-200 bg-white p-8 text-center text-gray-500">
                 Carregando histórico...
               </div>
-            ) : historicoFiltrado.length === 0 ? (
-              <div className="rounded-[8px] border border-gray-200 bg-white p-8 text-center text-gray-500">
+            ) : retiradasMorador.length === 0 ? (
+              <div className="rounded-[13px] border border-gray-200 bg-white p-8 text-center text-gray-500">
                 Você não tem encomendas no histórico.
               </div>
             ) : (
-              historicoFiltrado.map((encomenda) => (
+              retiradasMorador.map((encomenda) => (
                 <CartaoEncomendaRetirada key={encomenda.id} encomenda={encomenda} />
               ))
             )}

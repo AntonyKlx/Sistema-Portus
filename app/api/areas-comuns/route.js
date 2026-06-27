@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { autorizar } from '@/lib/authorize'
 
 export async function GET() {
-  const { response } = await autorizar('areas-comuns')
+  const { response } = await autorizar('reservas')
   if (response) return response
 
   try {

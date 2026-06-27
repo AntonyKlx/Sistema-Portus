@@ -24,15 +24,20 @@ async function enviarNotificacao(emailDestino, status, nome) {
       subject: `Atualização da sua reserva: ${status}`,
       html: mensagemHtml
     })
-    console.log("E-mail capturado pelo Mailtrap com sucesso!")
+    return true
   } catch (error) {
     console.log("Erro ao enviar e-mail: ", error)
+    return false
   }
 }
 
 export async function PUT(request, { params: paramsPromise }) {
-  const { response } = await autorizar('reservas')
+  const { response, session } = await autorizar('reservas')
   if (response) return response
+
+  if (!['sindico', 'administrador', 'adminMaster'].includes(session.user.perfil)) {
+    return NextResponse.json({ error: 'Apenas gestores podem avaliar reservas.' }, { status: 403 })
+  }
 
   try {
     const params = await paramsPromise
@@ -81,9 +86,9 @@ export async function PUT(request, { params: paramsPromise }) {
       }
     })
 
-    enviarNotificacao(emailMorador, status, nomeMorador)
+    const emailEnviado = await enviarNotificacao(emailMorador, status, nomeMorador)
 
-    return NextResponse.json({ reservaAtualizada }, { status: 200 })
+    return NextResponse.json({ reservaAtualizada, emailEnviado }, { status: 200 })
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno ao processar a reserva' }, { status: 500 })
   }

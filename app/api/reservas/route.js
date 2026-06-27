@@ -46,6 +46,7 @@ export async function GET(request) {
       select: {
         id: true,
         dataHora: true,
+        criadoEm: true,
         status: true,
         justificativa: true,
         areaComum: {
@@ -56,12 +57,94 @@ export async function GET(request) {
         },
         morador: {
           select: { usuario: { select: { nome: true } } }
-        }
+        },
+        areaComumId: true,
       }
     })
 
     return NextResponse.json(reservas, { status: 200 })
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao buscar reservas' }, { status: 500 })
+  }
+}
+
+export async function POST(request) {
+  const { response, session } = await autorizar('reservas')
+  if (response) return response
+
+  if (session.user.perfil !== 'morador') {
+    return NextResponse.json({ error: 'Apenas moradores podem solicitar reservas.' }, { status: 403 })
+  }
+
+  try {
+    const { areaComumId, dataHora } = await request.json()
+    const idArea = Number(areaComumId)
+    const dataReserva = new Date(dataHora)
+
+    if (!Number.isInteger(idArea) || idArea <= 0 || Number.isNaN(dataReserva.getTime())) {
+      return NextResponse.json({ error: 'Área e data da reserva são obrigatórias.' }, { status: 400 })
+    }
+
+    const [morador, area] = await Promise.all([
+      prisma.morador.findUnique({ where: { usuarioId: Number(session.user.id) } }),
+      prisma.areaComum.findUnique({ where: { id: idArea }, include: { regras: true } }),
+    ])
+
+    if (!morador) {
+      return NextResponse.json({ error: 'Usuário autenticado não é um morador.' }, { status: 403 })
+    }
+    if (!area) {
+      return NextResponse.json({ error: 'Área comum não encontrada.' }, { status: 404 })
+    }
+    if (dataReserva.getTime() <= Date.now()) {
+      return NextResponse.json({ error: 'A reserva deve ser feita para uma data futura.' }, { status: 400 })
+    }
+
+    const regras = area.regras
+    if (regras) {
+      const horasAntecedencia = (dataReserva.getTime() - Date.now()) / (1000 * 60 * 60)
+      if (horasAntecedencia < regras.antecedenciaMinimaReserva) {
+        return NextResponse.json(
+          { error: `A reserva precisa ser solicitada com pelo menos ${regras.antecedenciaMinimaReserva}h de antecedência.` },
+          { status: 409 },
+        )
+      }
+
+      const horaReserva = dataReserva.getHours() * 60 + dataReserva.getMinutes()
+      const inicio = new Date(regras.horarioPermitidoInicio)
+      const fim = new Date(regras.horarioPermitidoFim)
+      const inicioMinutos = inicio.getUTCHours() * 60 + inicio.getUTCMinutes()
+      const fimMinutos = fim.getUTCHours() * 60 + fim.getUTCMinutes()
+      if (horaReserva < inicioMinutos || horaReserva > fimMinutos) {
+        return NextResponse.json({ error: 'O horário escolhido não está disponível para esta área.' }, { status: 409 })
+      }
+    }
+
+    const [conflito, reservasAtivas] = await Promise.all([
+      prisma.reserva.findFirst({
+        where: { areaComumId: idArea, dataHora: dataReserva, status: { in: ['Pendente', 'Aprovada'] } },
+      }),
+      prisma.reserva.count({
+        where: { moradorId: morador.id, status: { in: ['Pendente', 'Aprovada'] } },
+      }),
+    ])
+
+    if (conflito) {
+      return NextResponse.json({ error: 'Já existe uma solicitação para este horário.' }, { status: 409 })
+    }
+    if (regras && reservasAtivas >= regras.limiteReservasAtivas) {
+      return NextResponse.json(
+        { error: `Você atingiu o limite de ${regras.limiteReservasAtivas} reservas ativas.` },
+        { status: 409 },
+      )
+    }
+
+    const reserva = await prisma.reserva.create({
+      data: { areaComumId: idArea, moradorId: morador.id, dataHora: dataReserva, status: 'Pendente' },
+    })
+
+    return NextResponse.json(reserva, { status: 201 })
+  } catch (error) {
+    return NextResponse.json({ error: 'Erro ao solicitar reserva.' }, { status: 500 })
   }
 }
