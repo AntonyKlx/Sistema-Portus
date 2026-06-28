@@ -47,8 +47,12 @@ function LoginForm() {
     const perfil = sessao?.user?.perfil;
     const callbackUrl = searchParams.get("callbackUrl");
 
-    router.replace(callbackUrl || `/dashboard/${perfil}`);
-    router.refresh();
+    if (perfil === "morador") {
+      router.push("/morador/encomendas");
+    } else {
+      // Porteiro, sindico e adm
+      router.push("/porteiro/dashboard");
+    }
   }
 
   return (
