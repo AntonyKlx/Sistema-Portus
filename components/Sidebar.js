@@ -15,35 +15,24 @@ import {
   ScrollText,
   LogOut,
   Database,
+  ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
-<<<<<<< HEAD
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Encomendas", href: "/encomendas", icon: Package },
-  { label: "Reservas", href: "/reservas", icon: CalendarDays },
-  { label: "Moradores", href: "/moradores", icon: Users },
-  { label: "Apartamentos", href: "/apartamentos", icon: Building2 },
-  { label: "Áreas Comuns", href: "/areas-comuns", icon: Layers },
-  { label: "Administradores", href: "/administradores", icon: UserCog, perfis: ["adminMaster"] },
-  { label: "Backups", href: "/backups", icon: Database, perfis: ["adminMaster"] },
-  { label: "Logs", href: "/logs", icon: ScrollText },
-=======
   { label: "Dashboard", href: "/porteiro/dashboard", icon: LayoutDashboard },
   { label: "Encomendas", href: "/porteiro/encomendas", icon: Package },
   { label: "Reservas", href: "/porteiro/reservas", icon: CalendarDays },
   { label: "Moradores", href: "/porteiro/moradores", icon: Users },
   { label: "Apartamentos", href: "/porteiro/apartamentos", icon: Building2 },
   { label: "Áreas Comuns", href: "/porteiro/areas-comuns", icon: Layers },
-  { label: "Administradores", href: "/porteiro/administradores", icon: ShieldCheck },
+  { label: "Administradores", href: "/administradores", icon: ShieldCheck },
   { label: "Logs", href: "/porteiro/logs", icon: ScrollText },
->>>>>>> registrar-encomenda
 ];
 
 const moradorNavItems = [
-  { label: "Encomendas", href: "/encomendas", icon: Package },
-  { label: "Painel", href: "/dashboard/morador", icon: LayoutDashboard },
-  { label: "Reservas", href: "/reservas", icon: CalendarDays },
+  { label: "Encomendas", href: "morador/encomendas", icon: Package },
+  { label: "Painel", href: "dashboard/morador", icon: LayoutDashboard },
+  { label: "Reservas", href: "morador/reservas", icon: CalendarDays },
 ];
 
 export default function Sidebar() {
@@ -71,14 +60,9 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex flex-col flex-1">
-<<<<<<< HEAD
-        {itensVisiveis.map(({ label, href, icon: Icon }) => {
-          const isActive = pathname === href || (href.startsWith("/dashboard") && pathname.startsWith(href));
-=======
         {/* Usamos o navItems direto aqui */}
         {navItems.map(({ label, href, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(`${href}/`);
->>>>>>> registrar-encomenda
 
           return (
             <Link

@@ -113,11 +113,7 @@ export default function ReservasPage() {
   async function buscarReservasAdmin() {
     setCarregandoAdmin(true);
     try {
-<<<<<<< HEAD:app/reservas/page.js
-      const res = await fetch("/api/reservas");
-=======
       const res = await fetch("/api/porteiro/reservas?status=Pendente");
->>>>>>> registrar-encomenda:app/porteiro/reservas/page.js
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar reservas");
       setReservasAdmin(data);
@@ -145,11 +141,7 @@ export default function ReservasPage() {
   async function buscarMinhasReservas() {
     setCarregandoMinhas(true);
     try {
-<<<<<<< HEAD:app/reservas/page.js
-      const res = await fetch("/api/reservas?minhas=true");
-=======
       const res = await fetch("/api/porteiro/reservas/backups");
->>>>>>> registrar-encomenda:app/porteiro/reservas/page.js
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar suas reservas");
       setMinhasReservas(data);

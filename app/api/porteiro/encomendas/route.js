@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { enviarEmailNotificacao } from '@/lib/email';
 
 export async function GET() {
   try {
@@ -41,6 +42,11 @@ export async function POST(request) {
 
     const unidade = await prisma.unidade.findFirst({
       where: { numero: numUnidade.toString() },
+      include: {
+        moradores: {
+          include: { usuario: true },
+        },
+      },
     });
 
     if (!unidade) {
@@ -56,8 +62,22 @@ export async function POST(request) {
       },
     });
 
+    const emailMorador = unidade.moradores.find((morador) => morador.usuario?.email)?.usuario.email;
+
+    if (emailMorador) {
+      void enviarEmailNotificacao(emailMorador, {
+        remetente: nova.remetente,
+        codigoPacote: nova.codigoPacote,
+        dataHoraChegada: nova.dataHoraChegada,
+        numeroUnidade: unidade.numero,
+      });
+    } else {
+      console.log(`Unidade ${unidade.numero} sem e-mail de morador cadastrado para notificacao de encomenda.`);
+    }
+
     return NextResponse.json(nova, { status: 201 });
   } catch (error) {
+    console.error("Erro no POST de encomendas:", error);
     return NextResponse.json({ message: "Erro ao registrar." }, { status: 500 });
   }
 }
