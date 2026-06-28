@@ -8,24 +8,18 @@ export async function GET() {
         unidade: {
           include: {
             moradores: {
-              include: {
-                usuario: true // Para pegar o nome do morador
-              }
+              include: { usuario: true }
             }
           }
         }
       },
-      orderBy: {
-        dataHoraChegada: 'desc' // As mais recentes primeiro
-      }
+      orderBy: { dataHoraChegada: 'desc' }
     });
 
     const formatadas = encomendas.map(enc => ({
       id: enc.id,
       apartamento: `Apto ${enc.unidade.numero}`,
-      bloco: enc.unidade.bloco,
-      // Pega o nome do primeiro morador vinculado a unidade
-      morador: enc.unidade.moradores[0]?.usuario.nome || "Unidade Vazia",
+      morador: enc.unidade.moradores[0]?.usuario.nome || "Sem morador",
       data: enc.dataHoraChegada,
       status: enc.status,
       remetente: enc.remetente,
@@ -34,39 +28,26 @@ export async function GET() {
 
     return NextResponse.json(formatadas, { status: 200 });
   } catch (error) {
-    console.error("Erro ao buscar encomendas:", error);
-    return NextResponse.json({ message: "Erro ao carregar lista." }, { status: 500 });
+    console.error("Erro no GET:", error);
+    return NextResponse.json({ message: "Erro ao listar." }, { status: 500 });
   }
 }
+
 
 export async function POST(request) {
   try {
     const body = await request.json();
     const { numUnidade, remetente, codigoPacote } = body;
 
-    // Validação de campos obrigatórios
-    if (!numUnidade || !remetente || !codigoPacote) {
-      return NextResponse.json(
-        { message: "Todos os campos são obrigatórios." },
-        { status: 400 }
-      );
-    }
-
-    // Buscar a unidade pelo NÚMERO
     const unidade = await prisma.unidade.findFirst({
       where: { numero: numUnidade.toString() },
     });
 
-    // Se a unidade não existir
     if (!unidade) {
-      return NextResponse.json(
-        { message: `A unidade ${numUnidade} não foi encontrada. Verifique o número.` },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Unidade não encontrada." }, { status: 404 });
     }
 
-    // Salvar a encomenda
-    const novaEncomenda = await prisma.encomenda.create({
+    const nova = await prisma.encomenda.create({
       data: {
         remetente,
         codigoPacote,
@@ -75,16 +56,8 @@ export async function POST(request) {
       },
     });
 
-    return NextResponse.json(
-      { message: "Encomenda registrada com sucesso!", encomenda: novaEncomenda },
-      { status: 201 }
-    );
-
+    return NextResponse.json(nova, { status: 201 });
   } catch (error) {
-    console.error("Erro no registro:", error);
-    return NextResponse.json(
-      { message: "Erro interno ao registrar encomenda." },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Erro ao registrar." }, { status: 500 });
   }
 }
