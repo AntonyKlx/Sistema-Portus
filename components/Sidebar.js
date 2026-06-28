@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 const navItems = [
+<<<<<<< HEAD
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Encomendas", href: "/encomendas", icon: Package },
   { label: "Reservas", href: "/reservas", icon: CalendarDays },
@@ -27,6 +28,16 @@ const navItems = [
   { label: "Administradores", href: "/administradores", icon: UserCog, perfis: ["adminMaster"] },
   { label: "Backups", href: "/backups", icon: Database, perfis: ["adminMaster"] },
   { label: "Logs", href: "/logs", icon: ScrollText },
+=======
+  { label: "Dashboard", href: "/porteiro/dashboard", icon: LayoutDashboard },
+  { label: "Encomendas", href: "/porteiro/encomendas", icon: Package },
+  { label: "Reservas", href: "/porteiro/reservas", icon: CalendarDays },
+  { label: "Moradores", href: "/porteiro/moradores", icon: Users },
+  { label: "Apartamentos", href: "/porteiro/apartamentos", icon: Building2 },
+  { label: "Áreas Comuns", href: "/porteiro/areas-comuns", icon: Layers },
+  { label: "Administradores", href: "/porteiro/administradores", icon: ShieldCheck },
+  { label: "Logs", href: "/porteiro/logs", icon: ScrollText },
+>>>>>>> registrar-encomenda
 ];
 
 const moradorNavItems = [
@@ -46,36 +57,36 @@ export default function Sidebar() {
       : navItems.filter((item) => !item.perfis || item.perfis.includes(perfil));
 
   return (
-    // 1. Aumentamos a largura para 260px (w-[260px]) e removemos o padding horizontal (px-4)
     <aside className="flex flex-col w-[260px] min-h-screen bg-[#FDFDFD] border-r border-gray-200">
       
-      {/* Logo */}
       <div className="flex items-center justify-center pt-8 pb-10">
         <Image
           src="/logo.png"
           alt="Portus"
-          width={220} // Largura original de referência
-          height={80} // Altura original de referência para não forçar um quadrado
-          // 2. Usamos w-48 (192px) e h-auto para a imagem escalar corretamente sem perder proporção
+          width={220}
+          height={80}
           className="w-48 h-auto object-contain"
           priority
         />
       </div>
 
-      {/* Navigation */}
-      {/* O flex-1 empurra o botão de logout lá para o final */}
       <nav className="flex flex-col flex-1">
+<<<<<<< HEAD
         {itensVisiveis.map(({ label, href, icon: Icon }) => {
           const isActive = pathname === href || (href.startsWith("/dashboard") && pathname.startsWith(href));
+=======
+        {/* Usamos o navItems direto aqui */}
+        {navItems.map(({ label, href, icon: Icon }) => {
+          const isActive = pathname === href || pathname.startsWith(`${href}/`);
+>>>>>>> registrar-encomenda
 
           return (
             <Link
               key={href}
               href={href}
-              // 3. Adicionamos pl-8 para empurrar o texto, e removemos os cantos arredondados para ficar igual ao protótipo
               className={`flex items-center gap-4 py-3.5 pl-8 text-[15px] font-medium transition-all duration-150 ${
                 isActive
-                  ? "bg-[#F3E8FF] text-[#5B21B6] border-l-4 border-[#5B21B6]" // Roxo do Next/Tailwind
+                  ? "bg-[#F3E8FF] text-[#5B21B6] border-l-4 border-[#5B21B6]"
                   : "text-gray-500 hover:bg-gray-50 border-l-4 border-transparent hover:text-gray-900"
               }`}
             >
@@ -89,8 +100,6 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Logout */}
-      {/* 4. Removemos as bordas de cima para o visual mais limpo visto no Figma */}
       <div className="pb-8">
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}

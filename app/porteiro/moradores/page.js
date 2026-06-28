@@ -42,7 +42,7 @@ export default function MoradoresPage() {
     setCarregando(true);
     setErro("");
     try {
-      const response = await fetch("/api/moradores");
+      const response = await fetch("/api/porteiro/moradores");
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Erro ao buscar moradores");
       setMoradores(data);
@@ -55,7 +55,7 @@ export default function MoradoresPage() {
 
   async function carregarUnidades() {
     try {
-      const response = await fetch("/api/unidades");
+      const response = await fetch("/api/porteiro/unidades");
       const data = await response.json();
       if (response.ok) setUnidades(data);
     } catch {
@@ -66,7 +66,7 @@ export default function MoradoresPage() {
   useEffect(() => {
     let ativo = true;
 
-    Promise.all([fetch("/api/moradores"), fetch("/api/unidades")])
+    Promise.all([fetch("/api/porteiro/moradores"), fetch("/api/porteiro/unidades")])
       .then(async ([resMoradores, resUnidades]) => {
         const [dataMoradores, dataUnidades] = await Promise.all([
           resMoradores.json(),
@@ -139,7 +139,7 @@ export default function MoradoresPage() {
     setMensagem("");
     setErro("");
 
-    const url = editandoId ? `/api/moradores/${editandoId}` : "/api/moradores";
+    const url = editandoId ? `/api/porteiro/moradores/${editandoId}` : "/api/moradores";
     const method = editandoId ? "PUT" : "POST";
 
     // No modo edição a senha é opcional
@@ -176,7 +176,7 @@ export default function MoradoresPage() {
     setErro("");
 
     try {
-      const response = await fetch(`/api/moradores/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/porteiro/moradores/${id}`, { method: "DELETE" });
       const data = await response.json();
 
       if (!response.ok) throw new Error(data.error || "Erro ao remover morador");

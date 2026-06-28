@@ -98,7 +98,7 @@ export default function ReservasPage() {
   async function buscarAreas() {
     setCarregandoAreas(true);
     try {
-      const res = await fetch("/api/areas-comuns");
+      const res = await fetch("/api/porteiro/areas-comuns");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar áreas");
       setAreas(data);
@@ -113,7 +113,11 @@ export default function ReservasPage() {
   async function buscarReservasAdmin() {
     setCarregandoAdmin(true);
     try {
+<<<<<<< HEAD:app/reservas/page.js
       const res = await fetch("/api/reservas");
+=======
+      const res = await fetch("/api/porteiro/reservas?status=Pendente");
+>>>>>>> registrar-encomenda:app/porteiro/reservas/page.js
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar reservas");
       setReservasAdmin(data);
@@ -127,7 +131,7 @@ export default function ReservasPage() {
   async function buscarReservasMorador(idArea) {
     setCarregandoMorador(true);
     try {
-      const res = await fetch(`/api/reservas?areaComumId=${idArea}&status=Aprovada`);
+      const res = await fetch(`/api/porteiro/reservas?areaComumId=${idArea}&status=Aprovada`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar reservas da área");
       setReservasMorador(data);
@@ -141,7 +145,11 @@ export default function ReservasPage() {
   async function buscarMinhasReservas() {
     setCarregandoMinhas(true);
     try {
+<<<<<<< HEAD:app/reservas/page.js
       const res = await fetch("/api/reservas?minhas=true");
+=======
+      const res = await fetch("/api/porteiro/reservas/backups");
+>>>>>>> registrar-encomenda:app/porteiro/reservas/page.js
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar suas reservas");
       setMinhasReservas(data);
@@ -228,7 +236,7 @@ export default function ReservasPage() {
     setSucesso("");
 
     try {
-      const res = await fetch(`/api/reservas/${id}`, {
+      const res = await fetch(`/api/porteiro/reservas/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: novoStatus, justificativa: "" }),
