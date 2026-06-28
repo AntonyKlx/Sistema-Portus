@@ -17,14 +17,14 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Encomendas", href: "/encomendas", icon: Package },
-  { label: "Reservas", href: "/reservas", icon: CalendarDays },
-  { label: "Moradores", href: "/moradores", icon: Users },
-  { label: "Apartamentos", href: "/apartamentos", icon: Building2 },
-  { label: "Áreas Comuns", href: "/areas-comuns", icon: Layers },
-  { label: "Administradores", href: "/administradores", icon: ShieldCheck },
-  { label: "Logs", href: "/logs", icon: ScrollText },
+  { label: "Dashboard", href: "/porteiro/dashboard", icon: LayoutDashboard },
+  { label: "Encomendas", href: "/porteiro/encomendas", icon: Package },
+  { label: "Reservas", href: "/porteiro/reservas", icon: CalendarDays },
+  { label: "Moradores", href: "/porteiro/moradores", icon: Users },
+  { label: "Apartamentos", href: "/porteiro/apartamentos", icon: Building2 },
+  { label: "Áreas Comuns", href: "/porteiro/areas-comuns", icon: Layers },
+  { label: "Administradores", href: "/porteiro/administradores", icon: ShieldCheck },
+  { label: "Logs", href: "/porteiro/logs", icon: ScrollText },
 ];
 
 export default function Sidebar() {
