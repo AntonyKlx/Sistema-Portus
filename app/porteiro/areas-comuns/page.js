@@ -12,7 +12,15 @@ import {
 } from "@/components/ui";
 
 const usuarioMock = { name: "Pessoa B", role: "Administrador" };
-const formInicial = { nome: "", descricao: "" };
+const formInicial = {
+  nome: "",
+  descricao: "",
+  antecedenciaMinimaReserva: "",
+  antecedenciaMinCancelamento: "",
+  limiteReservasAtivas: "",
+  horarioPermitidoInicio: "",
+  horarioPermitidoFim: "",
+};
 const statusReservaAtiva = ["Pendente", "Aprovada"];
 
 function ehHoje(data) {
@@ -33,17 +41,16 @@ function possuiReservaAtivaHoje(area) {
 function formatarHorario(data) {
   if (!data) return "08:00";
 
-  return new Intl.DateTimeFormat("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(data));
+  const valor = new Date(data);
+  if (Number.isNaN(valor.getTime())) return "08:00";
+
+  return `${String(valor.getUTCHours()).padStart(2, "0")}:${String(valor.getUTCMinutes()).padStart(2, "0")}`;
 }
 
 function formatarAntecedencia(horas, fallback) {
   const valor = Number.isFinite(Number(horas)) ? Number(horas) : fallback;
-  if (valor >= 24 && valor % 24 === 0) return `${valor / 24} dias antecedência`;
-  return `${valor}h antecedência`;
+  if (valor >= 24 && valor % 24 === 0) return `${valor / 24} dias antecedencia`;
+  return `${valor}h antecedencia`;
 }
 
 export default function AreasComunsPage() {
@@ -66,7 +73,7 @@ export default function AreasComunsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao buscar áreas comuns");
+        throw new Error(data.error || "Erro ao buscar areas comuns");
       }
 
       setAreas(data);
@@ -85,7 +92,7 @@ export default function AreasComunsPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || "Erro ao buscar áreas comuns");
+          throw new Error(data.error || "Erro ao buscar areas comuns");
         }
 
         if (ativo) setAreas(data);
@@ -134,12 +141,23 @@ export default function AreasComunsPage() {
     setForm((formAtual) => ({ ...formAtual, [name]: value }));
   }
 
-  function iniciarEdicao(area) {
-    setEditandoId(area.id);
-    setForm({
+  function preencherFormArea(area) {
+    const regras = area.regras;
+
+    return {
       nome: area.nome,
       descricao: area.descricao || "",
-    });
+      antecedenciaMinimaReserva: String(regras?.antecedenciaMinimaReserva ?? ""),
+      antecedenciaMinCancelamento: String(regras?.antecedenciaMinCancelamento ?? ""),
+      limiteReservasAtivas: String(regras?.limiteReservasAtivas ?? ""),
+      horarioPermitidoInicio: regras?.horarioPermitidoInicio ? formatarHorario(regras.horarioPermitidoInicio) : "",
+      horarioPermitidoFim: regras?.horarioPermitidoFim ? formatarHorario(regras.horarioPermitidoFim) : "",
+    };
+  }
+
+  function iniciarEdicao(area) {
+    setEditandoId(area.id);
+    setForm(preencherFormArea(area));
     setMostrarFormulario(true);
     setMensagem("");
     setErro("");
@@ -177,10 +195,10 @@ export default function AreasComunsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao salvar área comum");
+        throw new Error(data.error || "Erro ao salvar area comum");
       }
 
-      setMensagem(editandoId ? "Área comum atualizada com sucesso." : "Área comum cadastrada com sucesso.");
+      setMensagem(editandoId ? "Area comum atualizada com sucesso." : "Area comum cadastrada com sucesso.");
       cancelarEdicao();
       await carregarAreas();
     } catch (error) {
@@ -199,7 +217,7 @@ export default function AreasComunsPage() {
   }
 
   async function removerArea(id) {
-    const confirmouDelete = window.confirm("Deseja remover esta área comum?");
+    const confirmouDelete = window.confirm("Deseja remover esta area comum?");
     if (!confirmouDelete) return;
 
     setMensagem("");
@@ -215,19 +233,19 @@ export default function AreasComunsPage() {
         const confirmacao = await executarDelete(id, true);
 
         if (!confirmacao.response.ok) {
-          throw new Error(confirmacao.data.error || "Erro ao remover área comum");
+          throw new Error(confirmacao.data.error || "Erro ao remover area comum");
         }
 
-        setMensagem(confirmacao.data.message || "Área comum removida com sucesso.");
+        setMensagem(confirmacao.data.message || "Area comum removida com sucesso.");
         await carregarAreas();
         return;
       }
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao remover área comum");
+        throw new Error(data.error || "Erro ao remover area comum");
       }
 
-      setMensagem(data.message || "Área comum removida com sucesso.");
+      setMensagem(data.message || "Area comum removida com sucesso.");
       await carregarAreas();
     } catch (error) {
       setErro(error.message);
@@ -236,26 +254,26 @@ export default function AreasComunsPage() {
 
   return (
     <PageWrapper>
-      <PageHeader title="Áreas Comuns" user={usuarioMock} />
+      <PageHeader title="Areas Comuns" user={usuarioMock} />
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard label="Total de Áreas" value={areas.length} />
+        <StatCard label="Total de Areas" value={areas.length} />
         <StatCard label="Reservas Ativas Hoje" value={reservasAtivasHoje} />
-        <StatCard label="Áreas Disponíveis Agora" value={Math.max(areas.length - areasReservadasHoje, 0)} />
+        <StatCard label="Areas Disponiveis Agora" value={Math.max(areas.length - areasReservadasHoje, 0)} />
       </section>
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="w-full lg:max-w-[470px]">
             <SearchInput
-              placeholder="Buscar área..."
+              placeholder="Buscar area..."
               value={busca}
               onChange={(event) => setBusca(event.target.value)}
             />
           </div>
 
           <Button onClick={abrirCadastro} className="justify-center">
-            Cadastrar Área
+            Cadastrar Area
             <Plus size={18} />
           </Button>
         </div>
@@ -263,23 +281,69 @@ export default function AreasComunsPage() {
         {mostrarFormulario && (
           <form onSubmit={salvarArea} className="table-wrapper p-5">
             <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="section-title">{editandoId ? "Editar área comum" : "Nova área comum"}</h2>
+              <h2 className="section-title">{editandoId ? "Editar area comum" : "Nova area comum"}</h2>
               <button
                 type="button"
                 onClick={cancelarEdicao}
-                title="Fechar formulário"
+                title="Fechar formulario"
                 className="icon-btn"
               >
                 <X size={17} />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_2fr_auto] md:items-end">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Input label="Nome" name="nome" value={form.nome} onChange={atualizarCampo} required />
-              <Input label="Descrição" name="descricao" value={form.descricao} onChange={atualizarCampo} />
+              <Input label="Descricao" name="descricao" value={form.descricao} onChange={atualizarCampo} />
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+              <Input
+                label="Antecedencia minima para reserva (em horas)"
+                name="antecedenciaMinimaReserva"
+                type="number"
+                value={form.antecedenciaMinimaReserva}
+                onChange={atualizarCampo}
+                required
+              />
+              <Input
+                label="Antecedencia minima para cancelamento (em horas)"
+                name="antecedenciaMinCancelamento"
+                type="number"
+                value={form.antecedenciaMinCancelamento}
+                onChange={atualizarCampo}
+                required
+              />
+              <Input
+                label="Limite de reservas ativas por morador"
+                name="limiteReservasAtivas"
+                type="number"
+                value={form.limiteReservasAtivas}
+                onChange={atualizarCampo}
+                required
+              />
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+              <Input
+                label="Horario permitido - inicio"
+                name="horarioPermitidoInicio"
+                type="time"
+                value={form.horarioPermitidoInicio}
+                onChange={atualizarCampo}
+                required
+              />
+              <Input
+                label="Horario permitido - fim"
+                name="horarioPermitidoFim"
+                type="time"
+                value={form.horarioPermitidoFim}
+                onChange={atualizarCampo}
+                required
+              />
               <Button type="submit" className="justify-center whitespace-nowrap" disabled={salvando}>
                 <Plus size={16} />
-                {salvando ? "Salvando..." : editandoId ? "Salvar alterações" : "Cadastrar"}
+                {salvando ? "Salvando..." : editandoId ? "Salvar alteracoes" : "Cadastrar"}
               </Button>
             </div>
           </form>
@@ -289,9 +353,9 @@ export default function AreasComunsPage() {
         {erro && <div className="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{erro}</div>}
 
         {carregando ? (
-          <div className="table-wrapper p-5 text-sm text-gray-500">Carregando áreas comuns...</div>
+          <div className="table-wrapper p-5 text-sm text-gray-500">Carregando areas comuns...</div>
         ) : areasFiltradas.length === 0 ? (
-          <div className="table-wrapper p-5 text-sm text-gray-500">Nenhuma área comum encontrada.</div>
+          <div className="table-wrapper p-5 text-sm text-gray-500">Nenhuma area comum encontrada.</div>
         ) : (
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             {areasFiltradas.map((area) => {
@@ -306,14 +370,14 @@ export default function AreasComunsPage() {
                         ? "border-[#7C3AED] text-[#7C3AED]"
                         : "border-green-500 text-green-600"
                     }`}>
-                      {reservada ? "Reservado" : "Disponível"}
+                      {reservada ? "Reservado" : "Disponivel"}
                     </span>
                   </div>
 
                   <div className="flex flex-col gap-5 p-5">
                     <div>
                       <h2 className="text-[16px] font-semibold leading-6 text-gray-950">{area.nome}</h2>
-                      <p className="text-xs text-gray-600">{area.descricao || "Espaço disponível para reservas"}</p>
+                      <p className="text-xs text-gray-600">{area.descricao || "Espaco disponivel para reservas"}</p>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 text-sm text-gray-600 sm:grid-cols-2">
@@ -327,7 +391,7 @@ export default function AreasComunsPage() {
                       </span>
                       <span className="flex items-center gap-2">
                         <Users size={15} />
-                        Máx. {regras?.limiteReservasAtivas ?? 20} pessoas
+                        Max. {regras?.limiteReservasAtivas ?? 20} reservas
                       </span>
                       <span className="flex items-center gap-2">
                         <Users size={15} />
@@ -341,7 +405,7 @@ export default function AreasComunsPage() {
                         onClick={() => iniciarEdicao(area)}
                         className="inline-flex items-center justify-center gap-2 rounded-[8px] border border-[#9CA3AF] px-5 py-2.5 text-sm font-medium text-[#7C3AED] transition hover:bg-[#F6ECFF]"
                       >
-                        Editar Regras
+                        Editar
                         <Settings size={17} />
                       </button>
                       <button

@@ -1,50 +1,60 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { autorizar } from '@/lib/authorize'
+import { validarDadosRegras } from '@/lib/regrasReserva'
 
 export async function DELETE(request, { params }) {
   const { response } = await autorizar('areas-comuns')
   if (response) return response
 
   try {
-    const id = Number(params.id)
-    //validar id pra não dar cagada
+    const parametros = await params
+    const id = Number(parametros.id)
+
     if (!Number.isInteger(id) || id <= 0) {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+      return NextResponse.json({ error: 'ID invalido' }, { status: 400 })
     }
 
     const existeAreaComum = await prisma.areaComum.findUnique({
-      where: { id: id }
+      where: { id },
     })
-    if (!existeAreaComum) return NextResponse.json({ error: 'Área comum não existe' }, { status: 404 })
+
+    if (!existeAreaComum) {
+      return NextResponse.json({ error: 'Area comum nao existe' }, { status: 404 })
+    }
 
     const existeReservaAtiva = await prisma.reserva.findFirst({
       where: {
         areaComumId: id,
-        status: { in: ['Pendente', 'Aprovada'] } // tomar cuidado aqui por que pode mudar de acordo com o que a gente definir mais pra frente
-      }
+        status: { in: ['Pendente', 'Aprovada'] },
+      },
     })
 
-    const url = new URL(request.url);
-    const confirmou = url.searchParams.get('confirmar') === 'true';
+    const url = new URL(request.url)
+    const confirmou = url.searchParams.get('confirmar') === 'true'
 
-    if (existeReservaAtiva && !confirmou) return NextResponse.json({ error: 'Existem reservas pendentes para essa área comum. Confirma a exclusão?' }, { status: 409 })
+    if (existeReservaAtiva && !confirmou) {
+      return NextResponse.json(
+        { error: 'Existem reservas pendentes para essa area comum. Confirma a exclusao?' },
+        { status: 409 },
+      )
+    }
 
     await prisma.reserva.deleteMany({
-      where: { areaComumId: id }
+      where: { areaComumId: id },
     })
 
     await prisma.regrasReserva.deleteMany({
-      where: { areaComumId: id }
+      where: { areaComumId: id },
     })
 
     await prisma.areaComum.delete({
-      where: { id: id }
+      where: { id },
     })
 
-    return NextResponse.json({ message: 'Área comum deletada com sucesso' }, { status: 200 });
+    return NextResponse.json({ message: 'Area comum deletada com sucesso' }, { status: 200 })
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao deletar a área comum' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro ao deletar a area comum' }, { status: 500 })
   }
 }
 
@@ -53,40 +63,61 @@ export async function PUT(request, { params }) {
   if (response) return response
 
   try {
-    const id = Number(params.id)
-    //validar id pra não dar cagada
+    const parametros = await params
+    const id = Number(parametros.id)
+
     if (!Number.isInteger(id) || id <= 0) {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+      return NextResponse.json({ error: 'ID invalido' }, { status: 400 })
     }
 
     const existeAreaComum = await prisma.areaComum.findUnique({
-      where: { id: id }
+      where: { id },
     })
-    if (!existeAreaComum) return NextResponse.json({ error: 'Área comum não existe' }, { status: 404 })
+
+    if (!existeAreaComum) {
+      return NextResponse.json({ error: 'Area comum nao existe' }, { status: 404 })
+    }
 
     const data = await request.json()
-    const { nome, descricao } = data;
+    const { nome, descricao } = data
 
-    if (!nome) return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
+    if (!nome) {
+      return NextResponse.json({ error: 'Todos os campos sao obrigatorios.' }, { status: 400 })
+    }
+
+    const validacaoRegras = validarDadosRegras(data)
+    if (validacaoRegras.error) {
+      return NextResponse.json({ error: validacaoRegras.error }, { status: 400 })
+    }
 
     const areaExistente = await prisma.areaComum.findFirst({
       where: {
         id: { not: id },
-        nome
-      }
-    });
+        nome,
+      },
+    })
 
-    if (areaExistente) return NextResponse.json({ error: 'Já existe uma área comum com esse nome' }, { status: 409 })
+    if (areaExistente) {
+      return NextResponse.json({ error: 'Ja existe uma area comum com esse nome' }, { status: 409 })
+    }
 
     const areaAtualizada = await prisma.areaComum.update({
-      where: { id: id },
+      where: { id },
       data: {
         nome,
-        descricao
-      }
+        descricao,
+        regras: {
+          upsert: {
+            update: validacaoRegras.dados,
+            create: validacaoRegras.dados,
+          },
+        },
+      },
+      include: { regras: true },
     })
+
     return NextResponse.json(areaAtualizada, { status: 200 })
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao atualizar área comum' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao atualizar area comum' }, { status: 500 })
   }
 }
