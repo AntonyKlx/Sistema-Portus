@@ -31,7 +31,7 @@ export default function AreasComunsPage() {
     setErro("");
 
     try {
-      const response = await fetch("/api/areas-comuns");
+      const response = await fetch("/api/porteiro/areas-comuns");
       const data = await response.json();
 
       if (!response.ok) {
@@ -49,7 +49,7 @@ export default function AreasComunsPage() {
   useEffect(() => {
     let ativo = true;
 
-    fetch("/api/areas-comuns")
+    fetch("/api/porteiro/areas-comuns")
       .then(async (response) => {
         const data = await response.json();
 
@@ -107,7 +107,7 @@ export default function AreasComunsPage() {
     setMensagem("");
     setErro("");
 
-    const url = editandoId ? `/api/areas-comuns/${editandoId}` : "/api/areas-comuns";
+    const url = editandoId ? `/api/porteiro/areas-comuns/${editandoId}` : "/api/porteiro/areas-comuns";
     const method = editandoId ? "PUT" : "POST";
 
     try {
@@ -133,7 +133,7 @@ export default function AreasComunsPage() {
   }
 
   async function executarDelete(id, confirmado = false) {
-    const response = await fetch(`/api/areas-comuns/${id}${confirmado ? "?confirmar=true" : ""}`, {
+    const response = await fetch(`/api/porteiro/areas-comuns/${id}${confirmado ? "?confirmar=true" : ""}`, {
       method: "DELETE",
     });
     const data = await response.json();

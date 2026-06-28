@@ -24,7 +24,7 @@ export default function EncomendasPorteiroPage() {
     e.preventDefault();
     
     try {
-      const res = await fetch(`/api/encomendas/${encomendaParaBaixa.id}`, {
+      const res = await fetch(`/api/porteiro/encomendas/${encomendaParaBaixa.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nomeRetirante }),
@@ -61,7 +61,7 @@ export default function EncomendasPorteiroPage() {
     setAviso({ texto: "Salvando alterações...", tipo: "info" });
 
     try {
-      const res = await fetch(`/api/encomendas/${encomendaParaEditar.id}`, {
+      const res = await fetch(`/api/porteiro/encomendas/${encomendaParaEditar.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(encomendaParaEditar),
@@ -95,7 +95,7 @@ export default function EncomendasPorteiroPage() {
 
   const carregarEncomendas = async () => {
     try {
-      const res = await fetch("/api/encomendas");
+      const res = await fetch("/api/porteiro/encomendas");
       const data = await res.json();
       setEncomendas(data);
     } catch (error) {
@@ -110,7 +110,7 @@ export default function EncomendasPorteiroPage() {
     setAviso({ texto: "Processando...", tipo: "info" });
 
     try {
-      const res = await fetch("/api/encomendas", {
+      const res = await fetch("/api/porteiro/encomendas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formRegistro),
@@ -142,7 +142,7 @@ export default function EncomendasPorteiroPage() {
 
     const buscarDados = async () => {
       try {
-        const res = await fetch("/api/encomendas");
+        const res = await fetch("/api/porteiro/encomendas");
         const data = await res.json();
 
         // só atualizamos o estado se os dados realmente mudarem ou se o componente ainda estiver montado

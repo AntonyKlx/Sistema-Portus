@@ -31,7 +31,7 @@ export default function ApartamentosPage() {
     setErro("");
 
     try {
-      const response = await fetch("/api/unidades");
+      const response = await fetch("/api/porteiro/unidades");
       const data = await response.json();
 
       if (!response.ok) {
@@ -49,7 +49,7 @@ export default function ApartamentosPage() {
   useEffect(() => {
     let ativo = true;
 
-    fetch("/api/unidades")
+    fetch("/api/porteiro/unidades")
       .then(async (response) => {
         const data = await response.json();
 
@@ -108,7 +108,7 @@ export default function ApartamentosPage() {
     setMensagem("");
     setErro("");
 
-    const url = editandoId ? `/api/unidades/${editandoId}` : "/api/unidades";
+    const url = editandoId ? `/api/porteiro/unidades/${editandoId}` : "/api/porteiro/unidades";
     const method = editandoId ? "PUT" : "POST";
 
     try {
@@ -141,7 +141,7 @@ export default function ApartamentosPage() {
     setErro("");
 
     try {
-      const response = await fetch(`/api/unidades/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/porteiro/unidades/${id}`, { method: "DELETE" });
       const data = await response.json();
 
       if (!response.ok) {

@@ -77,7 +77,7 @@ export default function ReservasPage() {
 
   async function buscarAreas() {
     try {
-      const res = await fetch("/api/areas-comuns");
+      const res = await fetch("/api/porteiro/areas-comuns");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar áreas");
       setAreas(data);
@@ -92,7 +92,7 @@ export default function ReservasPage() {
   async function buscarReservasAdmin() {
     setCarregandoAdmin(true);
     try {
-      const res = await fetch("/api/reservas?status=Pendente");
+      const res = await fetch("/api/porteiro/reservas?status=Pendente");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar reservas pendentes");
       setReservasAdmin(data);
@@ -106,7 +106,7 @@ export default function ReservasPage() {
   async function buscarReservasMorador(idArea) {
     setCarregandoMorador(true);
     try {
-      const res = await fetch(`/api/reservas?areaComumId=${idArea}&status=Aprovada`);
+      const res = await fetch(`/api/porteiro/reservas?areaComumId=${idArea}&status=Aprovada`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar reservas da área");
       setReservasMorador(data);
@@ -120,7 +120,7 @@ export default function ReservasPage() {
   async function buscarBackups() {
     setCarregandoBackups(true);
     try {
-      const res = await fetch("/api/reservas/backups");
+      const res = await fetch("/api/porteiro/reservas/backups");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar backups");
       setBackups(data);
@@ -157,7 +157,7 @@ export default function ReservasPage() {
     setErro("");
     setSucesso("");
     try {
-      const res = await fetch(`/api/reservas/${id}`, {
+      const res = await fetch(`/api/porteiro/reservas/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: novoStatus, justificativa: "" }),
