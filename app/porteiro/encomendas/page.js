@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react"; // Importação do NextAuth no topo
 import {
   StatCard,
   Badge,
@@ -11,6 +12,15 @@ import {
 } from "@/components/ui";
 
 export default function EncomendasPorteiroPage() {
+  const { data: session } = useSession();
+
+  const usuarioReal = {
+    name: session?.user?.name,
+    role: session?.user?.perfil
+      ? session.user.perfil.charAt(0).toUpperCase() + session.user.perfil.slice(1)
+      : ""
+  };
+
   const [encomendas, setEncomendas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState("");
@@ -39,7 +49,7 @@ export default function EncomendasPorteiroPage() {
         setEncomendaParaBaixa(null);
         setNomeRetirante("");
         setAviso({ texto: "", tipo: "" });
-        carregarEncomendas(); // Atualiza a tabela
+        carregarEncomendas();
       }, 1500);
 
     } catch (error) {
@@ -119,13 +129,11 @@ export default function EncomendasPorteiroPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Aqui trata unidade não encontrada
         return setAviso({ texto: data.message, tipo: "erro" });
       }
 
       setAviso({ texto: "Registrada com sucesso!", tipo: "sucesso" });
 
-      // Fecha o modal e limpa tudo
       setTimeout(() => {
         setModalRegistroAberto(false);
         setFormRegistro({ numUnidade: "", remetente: "", codigoPacote: "" });
@@ -139,13 +147,10 @@ export default function EncomendasPorteiroPage() {
   };
 
   useEffect(() => {
-
     const buscarDados = async () => {
       try {
         const res = await fetch("/api/porteiro/encomendas");
         const data = await res.json();
-
-        // só atualizamos o estado se os dados realmente mudarem ou se o componente ainda estiver montado
         setEncomendas(data);
       } catch (error) {
         console.error("Erro ao carregar encomendas:", error);
@@ -153,22 +158,16 @@ export default function EncomendasPorteiroPage() {
         setCarregando(false);
       }
     };
-
     buscarDados();
-  }, []); // Mantemos o array vazio para rodar apenas uma vez
-
-  // filtro satus
+  }, []);
   const [filtroStatus, setFiltroStatus] = useState("Todos");
 
   const filtradas = encomendas
   .filter(enc => {
     const termo = busca.toLowerCase();
-
     const bateTexto = enc.apartamento?.toLowerCase().includes(termo) || 
                       enc.morador?.toLowerCase().includes(termo);
-
     const bateStatus = filtroStatus === "Todos" || enc.status === filtroStatus;
-
     return bateTexto && bateStatus;
   })
   .sort((a, b) => {
@@ -176,7 +175,6 @@ export default function EncomendasPorteiroPage() {
     if (a.status === "Retirada" && b.status === "Aguardando Retirada") return 1;
     return 0;
   });
-
 
   const stats = {
     pendentes: encomendas.filter(e => e.status === "Aguardando Retirada").length,
@@ -186,7 +184,7 @@ export default function EncomendasPorteiroPage() {
 
   return (
     <PageWrapper>
-      <PageHeader title="Encomendas" />
+      <PageHeader title="Encomendas" user={usuarioReal} />
 
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
         <StatCard label="Encomendas Pendentes" value={stats.pendentes} color="purple" />
@@ -245,7 +243,7 @@ export default function EncomendasPorteiroPage() {
                   onClick={() => {
                     setEncomendaParaEditar({
                       id: enc.id,
-                      numUnidade: enc.apartamento.replace("Apto ", ""), // Tira o "Apto " para o porteiro editar só o número
+                      numUnidade: enc.apartamento.replace("Apto ", ""),
                       remetente: enc.remetente,
                       codigoPacote: enc.codigo
                     });
@@ -272,12 +270,10 @@ export default function EncomendasPorteiroPage() {
         </Table>
       </div>
 
-      {/*  MODAL  */}
       {modalRegistroAberto && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-purple-100">
             <h2 className="text-2xl font-bold text-purple-900 mb-6">Registrar Pacote</h2>
-
             <form onSubmit={salvarEncomenda} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Apartamento / Unidade</label>
@@ -290,7 +286,6 @@ export default function EncomendasPorteiroPage() {
                   onChange={(e) => setFormRegistro({ ...formRegistro, numUnidade: e.target.value })}
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Remetente</label>
                 <input
@@ -302,7 +297,6 @@ export default function EncomendasPorteiroPage() {
                   onChange={(e) => setFormRegistro({ ...formRegistro, remetente: e.target.value })}
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Código do Pacote</label>
                 <input
@@ -316,8 +310,7 @@ export default function EncomendasPorteiroPage() {
               </div>
 
               {aviso.texto && (
-                <div className={`p-3 rounded-lg text-sm font-medium ${aviso.tipo === 'erro' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
-                  }`}>
+                <div className={`p-3 rounded-lg text-sm font-medium ${aviso.tipo === 'erro' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
                   {aviso.texto}
                 </div>
               )}
@@ -349,7 +342,6 @@ export default function EncomendasPorteiroPage() {
             <p className="text-gray-500 mb-6 text-sm">
               Unidade: <span className="font-bold text-gray-700">{encomendaParaBaixa?.apartamento}</span>
             </p>
-            
             <form onSubmit={processarBaixa} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Quem está retirando?</label>
@@ -362,15 +354,11 @@ export default function EncomendasPorteiroPage() {
                   onChange={(e) => setNomeRetirante(e.target.value)}
                 />
               </div>
-
               {aviso.texto && (
-                <div className={`p-3 rounded-lg text-sm font-medium ${
-                  aviso.tipo === 'erro' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
-                }`}>
+                <div className={`p-3 rounded-lg text-sm font-medium ${aviso.tipo === 'erro' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
                   {aviso.texto}
                 </div>
               )}
-
               <div className="flex gap-3 mt-8">
                 <button 
                   type="button"
@@ -396,7 +384,6 @@ export default function EncomendasPorteiroPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-purple-100">
             <h2 className="text-2xl font-bold text-purple-900 mb-6">Editar Encomenda</h2>
-            
             <form onSubmit={salvarEdicao} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Apartamento</label>
@@ -407,7 +394,6 @@ export default function EncomendasPorteiroPage() {
                   onChange={(e) => setEncomendaParaEditar({...encomendaParaEditar, numUnidade: e.target.value})}
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Remetente</label>
                 <input 
@@ -417,7 +403,6 @@ export default function EncomendasPorteiroPage() {
                   onChange={(e) => setEncomendaParaEditar({...encomendaParaEditar, remetente: e.target.value})}
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Código do Pacote</label>
                 <input 
@@ -427,13 +412,11 @@ export default function EncomendasPorteiroPage() {
                   onChange={(e) => setEncomendaParaEditar({...encomendaParaEditar, codigoPacote: e.target.value})}
                 />
               </div>
-
               {aviso.texto && (
                 <div className={`p-3 rounded-lg text-sm ${aviso.tipo === 'erro' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
                   {aviso.texto}
                 </div>
               )}
-
               <div className="flex gap-3 mt-8">
                 <button 
                   type="button"

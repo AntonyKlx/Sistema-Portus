@@ -25,7 +25,7 @@ const navItems = [
   { label: "Moradores", href: "/porteiro/moradores", icon: Users },
   { label: "Apartamentos", href: "/porteiro/apartamentos", icon: Building2 },
   { label: "Áreas Comuns", href: "/porteiro/areas-comuns", icon: Layers },
-  { label: "Administradores", href: "/administradores", icon: ShieldCheck },
+  { label: "Administradores", href: "/porteiro/administradores", icon: ShieldCheck },
   { label: "Logs", href: "/porteiro/logs", icon: ScrollText },
 ];
 

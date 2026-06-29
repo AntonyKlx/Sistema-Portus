@@ -12,7 +12,7 @@ export default function RootLayout({ children }) {
     <html lang="pt-BR">
       <body>
         <Providers>
-          <AppShell>{children}</AppShell>
+          {children}
         </Providers>
       </body>
     </html>

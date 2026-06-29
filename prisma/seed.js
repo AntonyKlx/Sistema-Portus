@@ -169,6 +169,7 @@ async function main() {
             limiteReservasAtivas: 2,
             horarioPermitidoInicio: new Date("2000-01-01T08:00:00.000"),
             horarioPermitidoFim: new Date("2000-01-01T22:00:00.000"),
+            duracaoReserva: 4
           },
         },
       },

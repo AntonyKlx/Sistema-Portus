@@ -104,6 +104,7 @@ model RegrasReserva {
   limiteReservasAtivas        Int
   horarioPermitidoInicio      DateTime
   horarioPermitidoFim         DateTime
+  duracaoReserva              Int
 
   areaComumId Int       @unique
   areaComum   AreaComum @relation(fields: [areaComumId], references: [id])
@@ -124,14 +125,14 @@ model Reserva {
 }
 
 model BackupReserva {
-  id              Int       @id @default(autoincrement())
-  status          String    @default("Concluido")
-  totalReservas   Int       @default(0)
-  solicitadoPor   String?
-  solicitadoEm    DateTime  @default(now())
-  concluidoEm     DateTime?
-  conteudo        Json
-  mensagemErro    String?
+  id            Int       @id @default(autoincrement())
+  status        String    @default("Concluido")
+  totalReservas Int       @default(0)
+  solicitadoPor String?
+  solicitadoEm  DateTime  @default(now())
+  concluidoEm   DateTime?
+  conteudo      Json
+  mensagemErro  String?
 }
 
 model BackupBanco {
