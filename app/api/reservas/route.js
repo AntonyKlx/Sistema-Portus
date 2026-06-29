@@ -2,6 +2,36 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { autorizar } from '@/lib/authorize'
 
+const TIME_ZONE = 'America/Sao_Paulo'
+
+function minutosDoFormulario(valor) {
+  if (typeof valor !== 'string') return null
+
+  const match = valor.match(/(?:T|\s)(\d{2}):(\d{2})/)
+  if (!match) return null
+
+  return Number(match[1]) * 60 + Number(match[2])
+}
+
+function minutosNoFuso(data) {
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(data))
+
+  const hora = Number(partes.find((parte) => parte.type === 'hour')?.value)
+  const minuto = Number(partes.find((parte) => parte.type === 'minute')?.value)
+
+  return hora * 60 + minuto
+}
+
+function horarioForaDoPeriodo(horario, inicio, fim) {
+  if (inicio <= fim) return horario < inicio || horario > fim
+  return horario < inicio && horario > fim
+}
+
 export async function POST(request) {
   const { response, session } = await autorizar('reservas')
   if (response) return response
@@ -66,11 +96,11 @@ export async function POST(request) {
     }
 
     // Disponibilidade de Horário
-    const dataQuery = dataHoraReserva.toISOString().split('T')[0]
-    const inicioPermitido = new Date(`${dataQuery}T${new Date(regras.horarioPermitidoInicio).toISOString().substring(11, 19)}Z`)
-    const fimPermitido = new Date(`${dataQuery}T${new Date(regras.horarioPermitidoFim).toISOString().substring(11, 19)}Z`)
+    const horaReserva = minutosDoFormulario(dataHora) ?? minutosNoFuso(dataHoraReserva)
+    const inicioPermitido = minutosNoFuso(regras.horarioPermitidoInicio)
+    const fimPermitido = minutosNoFuso(regras.horarioPermitidoFim)
 
-    if (dataHoraReserva < inicioPermitido || dataHoraReserva > fimPermitido) {
+    if (horarioForaDoPeriodo(horaReserva, inicioPermitido, fimPermitido)) {
       return NextResponse.json(
         { error: 'O horário solicitado está fora do período permitido para reservas nesta área.' },
         { status: 409 }

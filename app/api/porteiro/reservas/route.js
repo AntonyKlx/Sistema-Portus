@@ -2,6 +2,36 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { autorizar } from '@/lib/authorize'
 
+const TIME_ZONE = 'America/Sao_Paulo'
+
+function minutosDoFormulario(valor) {
+  if (typeof valor !== 'string') return null
+
+  const match = valor.match(/(?:T|\s)(\d{2}):(\d{2})/)
+  if (!match) return null
+
+  return Number(match[1]) * 60 + Number(match[2])
+}
+
+function minutosNoFuso(data) {
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(data))
+
+  const hora = Number(partes.find((parte) => parte.type === 'hour')?.value)
+  const minuto = Number(partes.find((parte) => parte.type === 'minute')?.value)
+
+  return hora * 60 + minuto
+}
+
+function horarioForaDoPeriodo(horario, inicio, fim) {
+  if (inicio <= fim) return horario < inicio || horario > fim
+  return horario < inicio && horario > fim
+}
+
 export async function GET(request) {
   const { response, session } = await autorizar('reservas')
   if (response) return response
@@ -110,12 +140,11 @@ export async function POST(request) {
         )
       }
 
-      const horaReserva = dataReserva.getHours() * 60 + dataReserva.getMinutes()
-      const inicio = new Date(regras.horarioPermitidoInicio)
-      const fim = new Date(regras.horarioPermitidoFim)
-      const inicioMinutos = inicio.getUTCHours() * 60 + inicio.getUTCMinutes()
-      const fimMinutos = fim.getUTCHours() * 60 + fim.getUTCMinutes()
-      if (horaReserva < inicioMinutos || horaReserva > fimMinutos) {
+      const horaReserva = minutosDoFormulario(dataHora) ?? minutosNoFuso(dataReserva)
+      const inicioMinutos = minutosNoFuso(regras.horarioPermitidoInicio)
+      const fimMinutos = minutosNoFuso(regras.horarioPermitidoFim)
+
+      if (horarioForaDoPeriodo(horaReserva, inicioMinutos, fimMinutos)) {
         return NextResponse.json({ error: 'O horário escolhido não está disponível para esta área.' }, { status: 409 })
       }
     }
