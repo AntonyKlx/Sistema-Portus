@@ -26,13 +26,13 @@ const navItems = [
   { label: "Apartamentos", href: "/porteiro/apartamentos", icon: Building2 },
   { label: "Áreas Comuns", href: "/porteiro/areas-comuns", icon: Layers },
   { label: "Administradores", href: "/porteiro/administradores", icon: ShieldCheck },
-  { label: "Logs", href: "/porteiro/logs", icon: ScrollText },
+  { label: "Logs", href: "/porteiro/logs", icon: ScrollText, perfis: ["adminMaster"] },
 ];
 
 const moradorNavItems = [
-  { label: "Encomendas", href: "morador/encomendas", icon: Package },
-  { label: "Painel", href: "dashboard/morador", icon: LayoutDashboard },
-  { label: "Reservas", href: "morador/reservas", icon: CalendarDays },
+  { label: "Encomendas", href: "/morador/encomendas", icon: Package },
+  { label: "Painel", href: "/morador", icon: LayoutDashboard },
+  { label: "Reservas", href: "/morador/reservas", icon: CalendarDays },
 ];
 
 export default function Sidebar() {
@@ -60,8 +60,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex flex-col flex-1">
-        {/* Usamos o navItems direto aqui */}
-        {navItems.map(({ label, href, icon: Icon }) => {
+        {itensVisiveis.map(({ label, href, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
           return (

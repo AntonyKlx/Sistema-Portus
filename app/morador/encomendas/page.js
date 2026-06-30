@@ -87,12 +87,20 @@ export default function EncomendasMoradorPage() {
     const fetchDados = async () => {
       try {
         const [resPendentes, resHistorico] = await Promise.all([
-          fetch(`/api/encomendas?minhas=true&status=${statusPendente}`),
-          fetch(`/api/encomendas?minhas=true`)
+          fetch(`/api/morador/encomendas?minhas=true&status=${statusPendente}`),
+          fetch(`/api/morador/encomendas?minhas=true`)
         ]);
 
         const dataPendentes = await resPendentes.json();
         const dataHistorico = await resHistorico.json();
+
+        if (!resPendentes.ok) {
+          throw new Error(dataPendentes.error || "Erro ao buscar encomendas pendentes.");
+        }
+
+        if (!resHistorico.ok) {
+          throw new Error(dataHistorico.error || "Erro ao buscar histÃ³rico de encomendas.");
+        }
 
         if (ativo) {
           setPendentes(dataPendentes);

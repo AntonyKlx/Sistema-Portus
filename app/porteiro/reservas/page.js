@@ -314,10 +314,6 @@ export default function ReservasPage() {
                 </select>
               </label>
             </div>
-            <Button onClick={() => { window.location.href = "/areas-comuns"; }} className="justify-center whitespace-nowrap">
-              Registrar Área
-              <Plus size={18} />
-            </Button>
           </div>
 
           <Table title="Solicitações Pendentes" columns={["Nome", "Área Solicitada", "Data Solicitada", "Ações"]}>

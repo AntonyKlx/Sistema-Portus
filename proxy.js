@@ -20,6 +20,10 @@ export async function proxy(req) {
     return NextResponse.redirect(new URL("/porteiro/encomendas", req.url));
   }
 
+  if (pathname.startsWith("/porteiro/logs") && perfil !== "adminMaster") {
+    return NextResponse.redirect(new URL("/acesso-negado", req.url));
+  }
+
   return NextResponse.next();
 }
 

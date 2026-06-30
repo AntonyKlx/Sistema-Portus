@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { autorizar } from '@/lib/authorize'
+import { registrarLog } from '@/lib/log'
 import nodemailer from 'nodemailer'
 
 const transporter = nodemailer.createTransport({
@@ -58,6 +59,7 @@ export async function PUT(request, { params: paramsPromise }) {
     const existeReserva = await prisma.reserva.findUnique({
       where: { id: id },
       include: {
+        areaComum: true,
         morador: {
           include: {
             usuario: true
@@ -85,6 +87,12 @@ export async function PUT(request, { params: paramsPromise }) {
         justificativa
       }
     })
+
+    const acaoLog = status === 'Aprovada' ? 'Aprovou' : 'Reprovou'
+    void registrarLog(
+      session.user.id,
+      `${acaoLog} reserva de ${existeReserva.areaComum.nome} para ${new Date(existeReserva.dataHora).toLocaleString('pt-BR')}`
+    )
 
     const emailEnviado = await enviarNotificacao(emailMorador, status, nomeMorador)
 

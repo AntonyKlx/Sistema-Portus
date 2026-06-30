@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { autorizar } from '@/lib/authorize';
+import { registrarLog } from '@/lib/log';
 
 export async function PATCH(request, { params }) {
+  const { response, session } = await autorizar('encomendas');
+  if (response) return response;
+
   try {
     const resolvedParams = await params;
     const id = resolvedParams.id;
@@ -15,6 +20,11 @@ export async function PATCH(request, { params }) {
         dataHoraRetirada: new Date(),
       },
     });
+
+    void registrarLog(
+      session.user.id,
+      `Deu baixa na encomenda de ${encomendaAtualizada.remetente}`
+    );
 
     return NextResponse.json(encomendaAtualizada, { status: 200 });
   } catch (error) {

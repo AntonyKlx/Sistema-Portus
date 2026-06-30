@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { enviarEmailNotificacao } from '@/lib/email';
+import { autorizar } from '@/lib/authorize';
+import { registrarLog } from '@/lib/log';
 
 export async function GET() {
   try {
@@ -36,6 +38,9 @@ export async function GET() {
 
 
 export async function POST(request) {
+  const { response, session } = await autorizar('encomendas');
+  if (response) return response;
+
   try {
     const body = await request.json();
     const { numUnidade, remetente, codigoPacote } = body;
@@ -61,6 +66,11 @@ export async function POST(request) {
         status: "Aguardando Retirada",
       },
     });
+
+    void registrarLog(
+      session.user.id,
+      `Registrou encomenda de ${nova.remetente} para unidade ${unidade.numero}`
+    );
 
     const emailMorador = unidade.moradores.find((morador) => morador.usuario?.email)?.usuario.email;
 
