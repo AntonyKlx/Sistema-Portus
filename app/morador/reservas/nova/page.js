@@ -129,11 +129,12 @@ export default function NovaReservaPage() {
 
       if (!resposta.ok) {
         setMensagem({ tipo: 'erro', texto: dados.error || 'Erro ao solicitar reserva.' })
-        return
+        return 
       }
 
       setMensagem({ tipo: 'sucesso', texto: 'Reserva solicitada. Aguarde a aprovação.' })
       setHorarioSelecionado('')
+      
     } catch (err) {
       setMensagem({ tipo: 'erro', texto: 'Erro ao enviar a solicitação.' })
     } finally {

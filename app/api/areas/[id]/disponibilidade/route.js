@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+const TIME_ZONE = 'America/Sao_Paulo';
+
+function getHoraNoFuso(data) {
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(data));
+
+  return Number(partes.find((parte) => parte.type === 'hour')?.value);
+}
+
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
@@ -39,14 +52,10 @@ export async function GET(request, { params }) {
     const { horarioPermitidoInicio, horarioPermitidoFim } = areaComum.regras;
 
     // Gera a lista de horários permitidos de hora em hora
-    const horaInicio = horarioPermitidoInicio.getUTCHours();
-    let horaFim = horarioPermitidoFim.getUTCHours();
-
-    const diaInicio = horarioPermitidoInicio.getUTCDate();
-    const diaFim = horarioPermitidoFim.getUTCDate();
-
-    if (diaFim !== diaInicio && horaFim === 0) {
-      horaFim = 24;
+    const horaInicio = getHoraNoFuso(horarioPermitidoInicio);
+    let horaFim = getHoraNoFuso(horarioPermitidoFim);
+    if (horaFim === 0) { // Trata o caso de terminar à meia-noite
+        horaFim = 24;
     }
 
     const todosHorarios = [];
@@ -55,8 +64,8 @@ export async function GET(request, { params }) {
     }
 
     // Busca as reservas já aprovadas/pendentes da área naquele dia
-    const inicioDoDia = new Date(`${dataBusca}T00:00:00`);
-    const fimDoDia = new Date(`${dataBusca}T23:59:59`);
+    const inicioDoDia = new Date(`${dataBusca}T00:00:00.000-03:00`); // Considera o fuso de SP
+    const fimDoDia = new Date(`${dataBusca}T23:59:59.999-03:00`);
 
     const reservasExistentes = await prisma.reserva.findMany({
       where: {
@@ -73,8 +82,7 @@ export async function GET(request, { params }) {
     });
 
     const horariosOcupados = reservasExistentes.map((reserva) => {
-      const data = new Date(reserva.dataHora);
-      return `${String(data.getUTCHours()).padStart(2, '0')}:00`;
+      return `${String(getHoraNoFuso(reserva.dataHora)).padStart(2, '0')}:00`;
     });
 
     // Remove os horários ocupados da lista de horários permitidos

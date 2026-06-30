@@ -4,15 +4,6 @@ import { autorizar } from '@/lib/authorize'
 
 const TIME_ZONE = 'America/Sao_Paulo'
 
-function minutosDoFormulario(valor) {
-  if (typeof valor !== 'string') return null
-
-  const match = valor.match(/(?:T|\s)(\d{2}):(\d{2})/)
-  if (!match) return null
-
-  return Number(match[1]) * 60 + Number(match[2])
-}
-
 function minutosNoFuso(data) {
   const partes = new Intl.DateTimeFormat('pt-BR', {
     timeZone: TIME_ZONE,
@@ -25,6 +16,13 @@ function minutosNoFuso(data) {
   const minuto = Number(partes.find((parte) => parte.type === 'minute')?.value)
 
   return hora * 60 + minuto
+}
+
+function minutosDaStringISO(dataString) {
+    const match = dataString.match(/T(\d{2}):(\d{2})/)
+    if (!match) return null
+
+    return Number(match[1]) * 60 + Number(match[2])
 }
 
 function horarioForaDoPeriodo(horario, inicio, fim) {
@@ -140,7 +138,7 @@ export async function POST(request) {
         )
       }
 
-      const horaReserva = minutosDoFormulario(dataHora) ?? minutosNoFuso(dataReserva)
+      const horaReserva = minutosDaStringISO(dataHora)
       const inicioMinutos = minutosNoFuso(regras.horarioPermitidoInicio)
       const fimMinutos = minutosNoFuso(regras.horarioPermitidoFim)
 
@@ -174,6 +172,7 @@ export async function POST(request) {
 
     return NextResponse.json(reserva, { status: 201 })
   } catch (error) {
+    console.error("Erro ao criar reserva:", error);
     return NextResponse.json({ error: 'Erro ao solicitar reserva.' }, { status: 500 })
   }
 }
