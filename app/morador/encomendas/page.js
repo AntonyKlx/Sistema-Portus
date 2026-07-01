@@ -40,7 +40,7 @@ function Mensagem({ tipo, children }) {
 
 function CartaoEncomendaPendente({ encomenda }) {
   return (
-    <div className="flex min-h-[108px] items-start justify-between gap-4 rounded-[13px] border border-[#E9D5FF] bg-[#F3E8FF] p-5 shadow-card">
+    <div className="flex min-h-[108px] items-start justify-between rounded-[13px] border border-[#E9D5FF] bg-[#F3E8FF] p-4 shadow-card">
       <div className="flex-1">
         <h3 className="text-[17px] font-semibold text-gray-700">{encomenda.remetente}</h3>
         <p className="mt-2 text-sm text-gray-500">Chegou em {formatarChegada(encomenda.dataHoraChegada)}</p>

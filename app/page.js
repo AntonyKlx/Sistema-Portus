@@ -12,7 +12,7 @@ export default async function Home() {
   const perfil = session.user.perfil;
 
   if (perfil === "morador") {
-    redirect("/morador/encomendas");
+    redirect("/morador");
   } else {
 
     redirect("/porteiro/dashboard");

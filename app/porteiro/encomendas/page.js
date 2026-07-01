@@ -22,6 +22,7 @@ export default function EncomendasPorteiroPage() {
   };
 
   const [encomendas, setEncomendas] = useState([]);
+  const [blocos, setBlocos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [busca, setBusca] = useState("");
 
@@ -61,6 +62,7 @@ export default function EncomendasPorteiroPage() {
   const [modalEditarAberto, setModalEditarAberto] = useState(false);
   const [encomendaParaEditar, setEncomendaParaEditar] = useState({
     id: "",
+    bloco: "",
     numUnidade: "",
     remetente: "",
     codigoPacote: ""
@@ -98,6 +100,7 @@ export default function EncomendasPorteiroPage() {
   const [modalRegistroAberto, setModalRegistroAberto] = useState(false);
   const [aviso, setAviso] = useState({ texto: "", tipo: "" });
   const [formRegistro, setFormRegistro] = useState({
+    bloco: "",
     numUnidade: "",
     remetente: "",
     codigoPacote: ""
@@ -112,6 +115,21 @@ export default function EncomendasPorteiroPage() {
       console.error("Erro ao carregar:", error);
     } finally {
       setCarregando(false);
+    }
+  };
+
+  const carregarBlocos = async () => {
+    try {
+      const res = await fetch("/api/porteiro/encomendas/blocos");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Erro ao carregar blocos");
+      }
+
+      setBlocos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Erro ao carregar blocos:", error);
     }
   };
 
@@ -136,7 +154,7 @@ export default function EncomendasPorteiroPage() {
 
       setTimeout(() => {
         setModalRegistroAberto(false);
-        setFormRegistro({ numUnidade: "", remetente: "", codigoPacote: "" });
+        setFormRegistro({ bloco: "", numUnidade: "", remetente: "", codigoPacote: "" });
         setAviso({ texto: "", tipo: "" });
         carregarEncomendas();
       }, 1000);
@@ -147,18 +165,8 @@ export default function EncomendasPorteiroPage() {
   };
 
   useEffect(() => {
-    const buscarDados = async () => {
-      try {
-        const res = await fetch("/api/porteiro/encomendas");
-        const data = await res.json();
-        setEncomendas(data);
-      } catch (error) {
-        console.error("Erro ao carregar encomendas:", error);
-      } finally {
-        setCarregando(false);
-      }
-    };
-    buscarDados();
+    carregarEncomendas();
+    carregarBlocos();
   }, []);
   const [filtroStatus, setFiltroStatus] = useState("Todos");
 
@@ -166,6 +174,7 @@ export default function EncomendasPorteiroPage() {
   .filter(enc => {
     const termo = busca.toLowerCase();
     const bateTexto = enc.apartamento?.toLowerCase().includes(termo) || 
+                      enc.bloco?.toLowerCase().includes(termo) ||
                       enc.morador?.toLowerCase().includes(termo);
     const bateStatus = filtroStatus === "Todos" || enc.status === filtroStatus;
     return bateTexto && bateStatus;
@@ -220,11 +229,12 @@ export default function EncomendasPorteiroPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <Table columns={["Apartamento", "Morador", "Data", "Status", "Ações"]}>
+        <Table columns={["Bloco", "Apartamento", "Morador", "Data", "Status", "Ações"]}>
           {carregando ? (
-            <tr><td colSpan={5} className="p-10 text-center text-gray-400">Carregando encomendas...</td></tr>
+            <tr><td colSpan={6} className="p-10 text-center text-gray-400">Carregando encomendas...</td></tr>
           ) : filtradas.map((enc) => (
             <tr key={enc.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+              <td className="p-4 text-gray-700 font-medium">{enc.bloco}</td>
               <td className="p-4 text-gray-700 font-medium">{enc.apartamento}</td>
               <td className="p-4 text-gray-600">{enc.morador}</td>
               <td className="p-4 text-sm text-gray-500">
@@ -243,6 +253,7 @@ export default function EncomendasPorteiroPage() {
                   onClick={() => {
                     setEncomendaParaEditar({
                       id: enc.id,
+                      bloco: enc.bloco || "",
                       numUnidade: enc.apartamento.replace("Apto ", ""),
                       remetente: enc.remetente,
                       codigoPacote: enc.codigo
@@ -275,6 +286,20 @@ export default function EncomendasPorteiroPage() {
           <div className="bg-white p-8 rounded-2xl max-w-md w-full shadow-2xl border border-purple-100">
             <h2 className="text-2xl font-bold text-purple-900 mb-6">Registrar Pacote</h2>
             <form onSubmit={salvarEncomenda} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Bloco</label>
+                <select
+                  required
+                  className="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-purple-300 outline-none transition-all"
+                  value={formRegistro.bloco}
+                  onChange={(e) => setFormRegistro({ ...formRegistro, bloco: e.target.value })}
+                >
+                  <option value="">Selecione o bloco</option>
+                  {blocos.map((bloco) => (
+                    <option key={bloco} value={bloco}>Bloco {bloco}</option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Apartamento / Unidade</label>
                 <input
@@ -386,9 +411,24 @@ export default function EncomendasPorteiroPage() {
             <h2 className="text-2xl font-bold text-purple-900 mb-6">Editar Encomenda</h2>
             <form onSubmit={salvarEdicao} className="space-y-4">
               <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Bloco</label>
+                <select
+                  required
+                  className="w-full border-2 border-gray-100 rounded-xl p-3 outline-none"
+                  value={encomendaParaEditar.bloco}
+                  onChange={(e) => setEncomendaParaEditar({...encomendaParaEditar, bloco: e.target.value})}
+                >
+                  <option value="">Selecione o bloco</option>
+                  {blocos.map((bloco) => (
+                    <option key={bloco} value={bloco}>Bloco {bloco}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Apartamento</label>
                 <input 
-                  type="text" required
+                  type="text"
+                  required
                   className="w-full border-2 border-gray-100 rounded-xl p-3 outline-none"
                   value={encomendaParaEditar.numUnidade}
                   onChange={(e) => setEncomendaParaEditar({...encomendaParaEditar, numUnidade: e.target.value})}

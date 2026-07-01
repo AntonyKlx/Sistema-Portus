@@ -13,7 +13,7 @@ export async function proxy(req) {
 
   // bloqueia por tipo de perfil
   if (pathname.startsWith("/porteiro") && perfil === "morador") {
-    return NextResponse.redirect(new URL("/morador/encomendas", req.url));
+    return NextResponse.redirect(new URL("/morador", req.url));
   }
 
   if (pathname.startsWith("/morador") && perfil === "porteiro") {

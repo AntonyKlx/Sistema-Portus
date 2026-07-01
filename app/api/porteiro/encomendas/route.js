@@ -22,6 +22,7 @@ export async function GET() {
     const formatadas = encomendas.map(enc => ({
       id: enc.id,
       apartamento: `Apto ${enc.unidade.numero}`,
+      bloco: enc.unidade.bloco,
       morador: enc.unidade.moradores[0]?.usuario.nome || "Sem morador",
       data: enc.dataHoraChegada,
       status: enc.status,
@@ -43,10 +44,13 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { numUnidade, remetente, codigoPacote } = body;
+    const { bloco, numUnidade, remetente, codigoPacote } = body;
 
     const unidade = await prisma.unidade.findFirst({
-      where: { numero: numUnidade.toString() },
+      where: {
+        bloco: bloco?.toString(),
+        numero: numUnidade.toString(),
+      },
       include: {
         moradores: {
           include: { usuario: true },

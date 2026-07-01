@@ -12,6 +12,14 @@ export default function BottomNavMorador() {
 
   return (
     <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center h-[72px] px-4 pb-safe z-20">
+  
+      <Link 
+        href="/morador/encomendas" 
+        className={`flex flex-col items-center transition-colors ${pathname.includes('/morador/encomendas') ? corAtiva : corInativa}`}
+      >
+        <Package size={24} />
+        <span className="text-[10px] font-medium mt-1">Encomendas</span>
+      </Link>
 
       <Link 
         href="/morador" 
@@ -19,14 +27,6 @@ export default function BottomNavMorador() {
       >
         <Home size={24} />
         <span className="text-[10px] font-medium mt-1">Painel</span>
-      </Link>
-      
-      <Link 
-        href="/morador/encomendas" 
-        className={`flex flex-col items-center transition-colors ${pathname.includes('/morador/encomendas') ? corAtiva : corInativa}`}
-      >
-        <Package size={24} />
-        <span className="text-[10px] font-medium mt-1">Encomendas</span>
       </Link>
       
       <Link 

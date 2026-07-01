@@ -34,14 +34,20 @@ export async function PATCH(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  const { response } = await autorizar('encomendas');
+  if (response) return response;
+
   try {
     const { id } = await params;
     const body = await request.json();
-    const { numUnidade, remetente, codigoPacote } = body;
+    const { bloco, numUnidade, remetente, codigoPacote } = body;
 
     // Validar se existe
     const unidade = await prisma.unidade.findFirst({
-      where: { numero: numUnidade.toString() },
+      where: {
+        bloco: bloco?.toString(),
+        numero: numUnidade.toString(),
+      },
     });
 
     if (!unidade) {

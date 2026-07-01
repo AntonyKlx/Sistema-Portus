@@ -48,7 +48,7 @@ function LoginForm() {
     const callbackUrl = searchParams.get("callbackUrl");
 
     if (perfil === "morador") {
-      router.push("/morador/encomendas");
+      router.push("/morador");
     } else {
       // Porteiro, sindico e adm
       router.push("/porteiro/dashboard");

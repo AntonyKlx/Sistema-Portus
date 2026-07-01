@@ -18,15 +18,19 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+const perfisDashboard = ["porteiro", "sindico", "administrador", "adminMaster"];
+const perfisGestao = ["sindico", "administrador", "adminMaster"];
+const perfisAdminMaster = ["adminMaster"];
+
 const navItems = [
-  { label: "Dashboard", href: "/porteiro/dashboard", icon: LayoutDashboard },
-  { label: "Encomendas", href: "/porteiro/encomendas", icon: Package },
-  { label: "Reservas", href: "/porteiro/reservas", icon: CalendarDays },
-  { label: "Moradores", href: "/porteiro/moradores", icon: Users },
-  { label: "Apartamentos", href: "/porteiro/apartamentos", icon: Building2 },
-  { label: "Áreas Comuns", href: "/porteiro/areas-comuns", icon: Layers },
-  { label: "Administradores", href: "/porteiro/administradores", icon: ShieldCheck },
-  { label: "Logs", href: "/porteiro/logs", icon: ScrollText, perfis: ["adminMaster"] },
+  { label: "Dashboard", href: "/porteiro/dashboard", icon: LayoutDashboard, perfis: perfisDashboard },
+  { label: "Encomendas", href: "/porteiro/encomendas", icon: Package, perfis: perfisDashboard },
+  { label: "Reservas", href: "/porteiro/reservas", icon: CalendarDays, perfis: perfisGestao },
+  { label: "Moradores", href: "/porteiro/moradores", icon: Users, perfis: perfisGestao },
+  { label: "Apartamentos", href: "/porteiro/apartamentos", icon: Building2, perfis: perfisGestao },
+  { label: "Areas Comuns", href: "/porteiro/areas-comuns", icon: Layers, perfis: perfisGestao },
+  { label: "Administradores", href: "/porteiro/administradores", icon: ShieldCheck, perfis: perfisAdminMaster },
+  { label: "Logs", href: "/porteiro/logs", icon: ScrollText, perfis: perfisAdminMaster },
 ];
 
 const moradorNavItems = [
@@ -43,7 +47,7 @@ export default function Sidebar() {
   const itensVisiveis =
     perfil === "morador"
       ? moradorNavItems
-      : navItems.filter((item) => !item.perfis || item.perfis.includes(perfil));
+      : navItems.filter((item) => item.perfis.includes(perfil));
 
   return (
     <aside className="flex flex-col w-[260px] min-h-screen bg-[#FDFDFD] border-r border-gray-200">
