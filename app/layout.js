@@ -4,7 +4,12 @@ import Providers from "@/components/Providers";
 
 export const metadata = {
   title: "Portus - Condominium Management",
-  description: "Sistema de gestão de condomínios",
+  description: "Sistema de gestao de condominios",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }) {
