@@ -226,7 +226,6 @@ export default function LogsPage() {
                 <th className="px-4 py-3">Usuario</th>
                 <th className="px-4 py-3">Perfil</th>
                 <th className="px-4 py-3">Tipo de Acao</th>
-                <th className="px-4 py-3 text-center">Acoes</th>
               </tr>
             </thead>
             <tbody>
@@ -256,15 +255,6 @@ export default function LogsPage() {
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tipoClasses[tipo.valor]}`}>
                         {tipo.label}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        type="button"
-                        title={log.acaoExecutada}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-950 transition hover:bg-[#F3E8FF] hover:text-[#582688]"
-                      >
-                        <Eye size={17} />
-                      </button>
                     </td>
                   </tr>
                 );

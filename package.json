@@ -10,6 +10,9 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@prisma/client": "6.19.2",
     "bcryptjs": "^3.0.3",
