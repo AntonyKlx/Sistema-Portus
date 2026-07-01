@@ -11,7 +11,7 @@ import {
   Table,
 } from "@/components/ui";
 
-const usuarioMock = { name: "Usuário Teste", role: "Admin Master" };
+const usuarioMock = { name: "Usuario Teste", role: "Admin Master" };
 
 function formatarData(data) {
   if (!data) return "-";
@@ -120,7 +120,7 @@ export default function BackupsPage() {
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard label="Backups Realizados" value={backups.length} />
-        <StatCard label="Concluídos" value={totalConcluidos} />
+        <StatCard label="Concluidos" value={totalConcluidos} />
         <StatCard label="Falhas" value={totalFalhas} />
       </section>
 
@@ -135,12 +135,12 @@ export default function BackupsPage() {
             </div>
             <div>
               <h2 className="section-title">Backup do Banco</h2>
-              <p className="text-sm text-gray-500">Gere uma cópia completa do MySQL.</p>
+              <p className="text-sm text-gray-500">Gere uma copia completa do MySQL.</p>
             </div>
           </div>
 
           <div className="mb-5 rounded-[8px] border border-[#E5E7EB] p-4">
-            <p className="text-xs font-medium uppercase text-gray-400">Último backup</p>
+            <p className="text-xs font-medium uppercase text-gray-400">Ultimo backup</p>
             <p className="mt-1 text-sm font-semibold text-gray-800">{formatarData(ultimoBackup?.solicitadoEm)}</p>
             <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
               {ultimoBackup?.status === "Falhou" ? <AlertTriangle size={16} className="text-red-600" /> : <CheckCircle2 size={16} className="text-green-600" />}
@@ -154,9 +154,9 @@ export default function BackupsPage() {
           </Button>
         </article>
 
-        <Table title="Histórico de Backups" columns={["Data/Hora", "Status", "Arquivo", "Tamanho", "Solicitado por"]}>
+        <Table title="Historico de Backups" columns={["Data/Hora", "Status", "Arquivo", "Tamanho", "Solicitado por"]}>
           {carregando ? (
-            <tr className="table-row"><td className="table-cell" colSpan={5}>Carregando histórico...</td></tr>
+            <tr className="table-row"><td className="table-cell" colSpan={5}>Carregando historico...</td></tr>
           ) : backups.length === 0 ? (
             <tr className="table-row"><td className="table-cell" colSpan={5}>Nenhum backup realizado.</td></tr>
           ) : backups.map((backup) => (

@@ -139,7 +139,7 @@ export default function MoradoresPage() {
     setMensagem("");
     setErro("");
 
-    const url = editandoId ? `/api/porteiro/moradores/${editandoId}` : "/api/moradores";
+    const url = editandoId ? `/api/porteiro/moradores/${editandoId}` : "/api/porteiro/moradores";
     const method = editandoId ? "PUT" : "POST";
 
     // No modo edição a senha é opcional
@@ -152,7 +152,10 @@ export default function MoradoresPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : { error: "Resposta inesperada do servidor." };
 
       if (!response.ok) throw new Error(data.error || "Erro ao salvar morador");
 

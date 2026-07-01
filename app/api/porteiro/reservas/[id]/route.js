@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { autorizar } from '@/lib/authorize'
 import { registrarLog } from '@/lib/log'
-import { enviarEmailReserva } from '@/lib/email'
 
 export async function PUT(request, { params: paramsPromise }) {
   const { response, session } = await autorizar('reservas')
@@ -47,9 +46,6 @@ export async function PUT(request, { params: paramsPromise }) {
       return NextResponse.json({ error: 'Esta reserva ja foi avaliada anteriormente.' }, { status: 409 })
     }
 
-    const emailMorador = existeReserva.morador.usuario.email
-    const nomeMorador = existeReserva.morador.usuario.nome
-
     const reservaAtualizada = await prisma.reserva.update({
       where: { id },
       data: {
@@ -64,16 +60,7 @@ export async function PUT(request, { params: paramsPromise }) {
       `${acaoLog} reserva de ${existeReserva.areaComum.nome} para ${new Date(existeReserva.dataHora).toLocaleString('pt-BR')}`
     )
 
-    const emailEnviado = emailMorador
-      ? await enviarEmailReserva(emailMorador, {
-          nomeMorador,
-          status,
-          area: existeReserva.areaComum.nome,
-          dataHora: existeReserva.dataHora,
-        })
-      : false
-
-    return NextResponse.json({ reservaAtualizada, emailEnviado }, { status: 200 })
+    return NextResponse.json({ reservaAtualizada }, { status: 200 })
   } catch (error) {
     console.error('Erro interno ao processar a reserva:', error)
     return NextResponse.json({ error: 'Erro interno ao processar a reserva' }, { status: 500 })

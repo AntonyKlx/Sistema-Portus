@@ -236,11 +236,7 @@ export default function ReservasPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao atualizar reserva");
 
-      setSucesso(
-        data.emailEnviado
-          ? `Reserva ${novoStatus.toLowerCase()} e e-mail de confirmação enviado.`
-          : `Reserva ${novoStatus.toLowerCase()} com sucesso. O e-mail não pôde ser enviado.`,
-      );
+      setSucesso(`Reserva ${novoStatus.toLowerCase()} com sucesso.`);
       buscarReservasAdmin();
     } catch (err) {
       setErro(err.message);

@@ -30,6 +30,7 @@ const navItems = [
   { label: "Apartamentos", href: "/porteiro/apartamentos", icon: Building2, perfis: perfisGestao },
   { label: "Areas Comuns", href: "/porteiro/areas-comuns", icon: Layers, perfis: perfisGestao },
   { label: "Administradores", href: "/porteiro/administradores", icon: ShieldCheck, perfis: perfisAdminMaster },
+  { label: "Backups", href: "/porteiro/backups", icon: Database, perfis: perfisAdminMaster },
   { label: "Logs", href: "/porteiro/logs", icon: ScrollText, perfis: perfisAdminMaster },
 ];
 
