@@ -103,7 +103,7 @@ export default function PainelMoradorPage() {
           setReservas(Array.isArray(dataReservas) ? dataReservas : []);
         }
       } catch (error) {
-        if (ativo) setErro(error.message || "Nao foi possivel carregar o painel.");
+        if (ativo) setErro(error.message || "Não foi possivel carregar o painel.");
       } finally {
         if (ativo) setCarregando(false);
       }
@@ -128,8 +128,8 @@ export default function PainelMoradorPage() {
   return (
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-6 py-5 sm:px-8">
       <header>
-        <h1 className="text-[22px] font-bold leading-7 text-gray-800">Ola, {primeiroNome(session)}!</h1>
-        <p className="mt-1 text-sm font-medium text-[#582688]">Aqui esta as informacoes gerais de hoje.</p>
+        <h1 className="text-[22px] font-bold leading-7 text-gray-800">Olá, {primeiroNome(session)}!</h1>
+        <p className="mt-1 text-sm font-medium text-[#582688]">Aqui está as informações gerais de hoje.</p>
       </header>
 
       {erro && <Mensagem tipo="erro">{erro}</Mensagem>}
@@ -154,7 +154,7 @@ export default function PainelMoradorPage() {
           {carregando ? (
             <p className="text-sm text-gray-500">Carregando reservas...</p>
           ) : reservasConfirmadas.length === 0 ? (
-            <p className="text-sm text-gray-500">Voce nao possui reservas confirmadas.</p>
+            <p className="text-sm text-gray-500">Você não possui reservas confirmadas.</p>
           ) : (
             reservasConfirmadas.map((reserva, index) => (
               <article

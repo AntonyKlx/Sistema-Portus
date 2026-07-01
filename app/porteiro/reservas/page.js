@@ -113,7 +113,7 @@ export default function ReservasPage() {
   async function buscarReservasAdmin() {
     setCarregandoAdmin(true);
     try {
-      const res = await fetch("/api/porteiro/reservas?status=Pendente");
+      const res = await fetch("/api/porteiro/reservas");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao buscar reservas");
       setReservasAdmin(data);
@@ -263,8 +263,12 @@ export default function ReservasPage() {
       return correspondeBusca && correspondeFiltro;
     });
   }, [busca, filtro, pendentes]);
-  const reservasAprovadasHoje = useMemo(
-    () => reservasAdmin.filter((reserva) => reserva.status === "Aprovada" && ehHoje(reserva.dataHora)).length,
+  const areasReservadasHoje = useMemo(
+    () => new Set(
+      reservasAdmin
+        .filter((reserva) => reserva.status === "Aprovada" && ehHoje(reserva.dataHora))
+        .map((reserva) => reserva.areaComumId)
+    ).size,
     [reservasAdmin],
   );
   const opcoesAreas = useMemo(() => {
@@ -296,7 +300,7 @@ export default function ReservasPage() {
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <StatCard label="Reservas Pendentes" value={pendentes.length} />
-          <StatCard label="Áreas Reservadas Hoje" value={`${reservasAprovadasHoje}/${areas.length}`} />
+          <StatCard label="Áreas Reservadas Hoje" value={`${areasReservadasHoje}/${areas.length}`} />
         </section>
 
         {erro && <Mensagem tipo="erro">{erro}</Mensagem>}

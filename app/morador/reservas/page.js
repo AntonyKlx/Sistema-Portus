@@ -220,11 +220,11 @@ export default function ReservasMoradorPage() {
           </div>
         </div>
 
-        <div className="flex justify-end mt-3">
+        {/* <div className="flex justify-end mt-3">
           <button className="text-[#582688] text-sm font-semibold flex items-center gap-1 hover:underline">
             Ver historico Completo <ArrowRight size={16} />
           </button>
-        </div>
+        </div> */}
       </section>
 
       <Link href="/morador/reservas/nova">
